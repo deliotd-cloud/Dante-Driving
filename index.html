@@ -1,0 +1,1346 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dante's Theory Test Garage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Overpass:ital,wght@0,300;0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#040a14;
+    --deep:#07121f;
+    --skin:linear-gradient(165deg, rgba(34,72,118,.55), rgba(10,26,48,.82));
+    --hair:rgba(96,178,255,.22);
+    --ice:#e6f2ff;
+    --dim:#7f9dc6;
+    --azure:#3fd0ff;
+    --violet:#9b8cff;
+    --go:#2ee6a8;
+    --stop:#ff4d63;
+    --amber:#ffc447;
+    --cham:polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+    --chamS:polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  html{background:var(--void)}
+  body{
+    background:transparent;
+    color:var(--ice);
+    font-family:Overpass,'Segoe UI',system-ui,sans-serif;
+    font-size:17px;line-height:1.45;
+    padding:0 16px 120px;max-width:620px;margin:0 auto;
+    font-variant-numeric:tabular-nums;
+    position:relative;
+  }
+  body:before{
+    content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+    background:
+      radial-gradient(95% 55% at 50% -8%, rgba(63,208,255,.20), transparent 62%),
+      radial-gradient(80% 50% at 105% 102%, rgba(155,140,255,.16), transparent 60%),
+      linear-gradient(180deg,#061020 0%, var(--void) 70%);
+  }
+  body:after{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.55;
+    background-image:
+      linear-gradient(rgba(96,178,255,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(96,178,255,.07) 1px, transparent 1px);
+    background-size:34px 34px;
+    -webkit-mask-image:radial-gradient(120% 70% at 50% 0%, #000 0%, transparent 72%);
+    mask-image:radial-gradient(120% 70% at 50% 0%, #000 0%, transparent 72%);
+  }
+
+  h1,h2,h3{font-family:'Chakra Petch',Overpass,sans-serif;font-weight:700;line-height:1.1;letter-spacing:.005em;margin:0}
+  h1{font-size:30px}
+  h2{font-size:23px}
+  h3{font-size:18px;font-weight:600}
+  p{margin:.5em 0}
+  button{font-family:inherit;font-size:inherit;color:inherit;border:0;background:none;cursor:pointer}
+  .screen{display:none;padding-top:18px}
+  .screen.on{display:block}
+  .mute{color:var(--dim)}
+  .small{font-size:14px}
+  .num{font-family:'Chakra Petch',monospace;font-weight:700;font-variant-numeric:tabular-nums}
+
+  /* ---------- splash ---------- */
+  #splash{
+    position:fixed;inset:0;z-index:100;padding:24px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    background:
+      radial-gradient(100% 55% at 50% 18%, rgba(63,208,255,.20), transparent 62%),
+      radial-gradient(90% 60% at 50% 100%, rgba(155,140,255,.18), transparent 65%),
+      #030811;
+    transition:opacity .5s ease, visibility .5s ease;
+  }
+  #splash.gone{opacity:0;visibility:hidden}
+  .lplate{
+    position:relative;width:88px;height:88px;background:#fff;color:#d4351c;
+    clip-path:var(--cham);
+    display:grid;place-items:center;font-family:'Chakra Petch',sans-serif;font-size:60px;font-weight:700;line-height:1;
+    animation:drop .6s cubic-bezier(.2,.9,.3,1.2) both;
+  }
+  .lhalo{
+    position:absolute;inset:-32px;border-radius:50%;
+    background:radial-gradient(circle, rgba(63,208,255,.38), transparent 68%);
+    animation:pulse 3.4s ease-in-out infinite;
+  }
+  .lwrap{position:relative;display:grid;place-items:center}
+  .sp-hi{font-size:13px;color:var(--azure);margin:26px 0 0;letter-spacing:.16em;animation:rise .5s .18s ease both;font-family:'Chakra Petch',sans-serif;font-weight:600}
+  .sp-name{font-family:'Chakra Petch',sans-serif;font-size:50px;font-weight:700;letter-spacing:.01em;margin:2px 0 0;
+           text-shadow:0 0 26px rgba(63,208,255,.5);animation:rise .5s .26s ease both}
+  .sp-sub{font-size:16px;color:var(--ice);opacity:.82;margin:8px 0 0;max-width:300px;animation:rise .5s .34s ease both}
+  .sp-stats{font-size:13px;color:var(--dim);margin-top:16px;font-family:'Chakra Petch',sans-serif;letter-spacing:.04em;animation:rise .5s .42s ease both}
+  .sp-go{
+    margin-top:32px;padding:14px 36px;background:linear-gradient(100deg,var(--azure),#7ee8ff);
+    color:#031321;font-weight:700;font-size:16px;font-family:'Chakra Petch',sans-serif;letter-spacing:.05em;
+    clip-path:var(--chamS);animation:rise .5s .5s ease both;
+  }
+  .sp-road{position:absolute;left:0;right:0;bottom:0;height:52px;overflow:hidden;
+           border-top:1px solid rgba(96,178,255,.28);
+           background:linear-gradient(180deg, rgba(63,208,255,.07), transparent)}
+  .sp-road:after{
+    content:"";position:absolute;top:24px;left:0;width:200%;height:4px;
+    background:repeating-linear-gradient(90deg,var(--azure) 0 42px,transparent 42px 92px);
+    box-shadow:0 0 14px rgba(63,208,255,.7);
+    animation:drive 1.5s linear infinite;
+  }
+  @keyframes drop{from{transform:translateY(-24px) scale(.86);opacity:0}to{transform:none;opacity:1}}
+  @keyframes rise{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+  @keyframes drive{from{transform:translateX(0)}to{transform:translateX(-92px)}}
+  @keyframes pulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+
+  /* ---------- instrument cluster ---------- */
+  .cluster{
+    position:relative;margin:10px -2px 0;padding:20px 16px 16px;
+    background:
+      linear-gradient(170deg, rgba(38,82,134,.42), rgba(7,18,34,.9)),
+      repeating-linear-gradient(90deg, rgba(96,178,255,.05) 0 1px, transparent 1px 26px);
+    clip-path:var(--cham);
+  }
+  .cluster:before{
+    content:"";position:absolute;inset:0;pointer-events:none;clip-path:var(--cham);
+    box-shadow:inset 0 0 0 1px var(--hair), inset 0 1px 0 rgba(255,255,255,.07);
+  }
+  .brk{position:absolute;width:16px;height:16px;border:2px solid var(--azure);opacity:.8}
+  .brk.tl{top:8px;left:8px;border-right:0;border-bottom:0}
+  .brk.br{bottom:8px;right:8px;border-left:0;border-top:0}
+  .hello{font-size:12.5px;color:var(--azure);letter-spacing:.1em;text-align:center;
+         font-family:'Chakra Petch',sans-serif;font-weight:600}
+  .gaugewrap{position:relative;max-width:340px;margin:6px auto 0}
+  .gauge{display:block;width:100%}
+  .gaugeval{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+             padding-top:30px;pointer-events:none}
+  .gaugeval .pct{font-family:'Chakra Petch',sans-serif;font-size:54px;font-weight:700;line-height:1;
+                 text-shadow:0 0 22px rgba(63,208,255,.45)}
+  .gaugeval .pct i{font-style:normal;font-size:20px;color:var(--azure);margin-left:2px}
+  .readout{text-align:center;margin-top:2px}
+  .readout .lab{font-size:12.5px;color:var(--dim)}
+  .rank{
+    display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:7px 15px;
+    background:rgba(63,208,255,.10);clip-path:var(--chamS);
+    font-family:'Chakra Petch',sans-serif;font-size:13.5px;font-weight:600;letter-spacing:.03em;
+    box-shadow:inset 0 0 0 1px var(--hair);
+  }
+  .xpbar{height:5px;background:rgba(96,178,255,.14);overflow:hidden;margin-top:12px}
+  .xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--azure));
+           box-shadow:0 0 12px rgba(63,208,255,.8);transition:width .6s ease}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+  .stat{background:rgba(8,22,42,.7);clip-path:var(--chamS);padding:11px 8px;text-align:center;
+        box-shadow:inset 0 0 0 1px var(--hair)}
+  .stat b{display:block;font-family:'Chakra Petch',sans-serif;font-size:22px;font-weight:700;color:var(--azure)}
+  .stat span{font-size:11px;color:var(--dim);letter-spacing:.05em}
+
+  /* ---------- tiles & buttons ---------- */
+  .menu{display:grid;gap:9px;margin-top:20px}
+  .tile{
+    position:relative;display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+    background:var(--skin);clip-path:var(--chamS);padding:14px 16px 14px 18px;
+    box-shadow:inset 0 0 0 1px var(--hair), inset 2px 0 0 rgba(63,208,255,.55);
+    transition:transform .12s ease, box-shadow .15s ease;
+  }
+  .tile:active{transform:translateX(2px);box-shadow:inset 0 0 0 1px rgba(120,220,255,.5), inset 3px 0 0 var(--azure)}
+  .tile .ico{width:32px;flex:none;display:grid;place-items:center;font-size:19px}
+  .tile b{display:block;font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:16.5px;letter-spacing:.01em}
+  .tile span{display:block;font-size:13px;color:var(--dim);margin-top:1px}
+  .tile.boss{
+    background:linear-gradient(110deg, rgba(120,30,60,.6), rgba(46,16,70,.75));
+    box-shadow:inset 0 0 0 1px rgba(255,120,150,.3), inset 2px 0 0 var(--amber);
+  }
+  .tile.boss b{color:var(--amber)}
+
+  .btn{
+    display:block;width:100%;text-align:center;padding:15px;clip-path:var(--chamS);
+    background:linear-gradient(100deg,var(--azure),#79e6ff);color:#031321;
+    font-family:'Chakra Petch',sans-serif;font-weight:700;letter-spacing:.04em;margin-top:12px;
+  }
+  .btn:active{filter:brightness(.9)}
+  .btn.ghost{background:rgba(63,208,255,.08);color:var(--ice);box-shadow:inset 0 0 0 1px var(--hair)}
+  .btn.go{background:linear-gradient(100deg,var(--go),#7df5cd);color:#012418}
+  .row{display:flex;gap:9px}
+  .row .btn{flex:1}
+  .back{display:inline-flex;align-items:center;gap:6px;color:var(--dim);font-size:15px;padding:8px 0;margin-bottom:2px}
+
+  /* ---------- topic list ---------- */
+  .topic{display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+         padding:12px 6px;border-bottom:1px solid rgba(96,178,255,.14)}
+  .topic:active{background:rgba(63,208,255,.07)}
+  .ring{flex:none}
+  .topic .tx{flex:1;min-width:0}
+  .topic .tx b{display:block;font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:16px}
+  .topic .tx span{font-size:12.5px;color:var(--dim)}
+
+  /* ---------- quiz ---------- */
+  .qhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 10px}
+  .qhead .meta{font-size:12px;color:var(--dim);letter-spacing:.06em;font-family:'Chakra Petch',sans-serif}
+  .clock{font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:17px;padding:4px 12px;
+         color:var(--azure);background:rgba(63,208,255,.10);clip-path:var(--chamS);
+         box-shadow:inset 0 0 0 1px var(--hair)}
+  .clock.warn{color:#2a1600;background:var(--amber);box-shadow:none}
+  .prog{height:3px;background:rgba(96,178,255,.16);overflow:hidden;margin-bottom:20px}
+  .prog i{display:block;height:100%;background:var(--azure);box-shadow:0 0 12px rgba(63,208,255,.9);transition:width .3s ease}
+  .qtext{font-size:20px;font-weight:600;line-height:1.32;margin:0 0 14px}
+  .pick{font-family:'Chakra Petch',sans-serif;font-size:12.5px;color:var(--amber);
+        letter-spacing:.09em;margin:0 0 12px}
+  .scenario{background:rgba(63,208,255,.07);clip-path:var(--chamS);padding:13px 15px;margin:0 0 16px;
+            font-size:15px;line-height:1.4;box-shadow:inset 0 0 0 1px var(--hair)}
+  .scenario b{display:block;font-family:'Chakra Petch',sans-serif;font-size:12px;color:var(--azure);
+              letter-spacing:.1em;font-weight:600;margin-bottom:5px}
+  .foot{margin-top:26px;padding-top:16px;border-top:1px solid rgba(96,178,255,.14);
+        font-size:12.5px;color:var(--dim);line-height:1.5}
+  .opts{display:grid;gap:8px}
+  .opt{
+    display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;
+    background:var(--skin);clip-path:var(--chamS);padding:13px 14px;line-height:1.35;
+    box-shadow:inset 0 0 0 1px var(--hair);transition:box-shadow .14s ease, background .14s ease;
+  }
+  .opt:active{box-shadow:inset 0 0 0 1px rgba(120,220,255,.6)}
+  .opt .k{
+    flex:none;width:24px;height:24px;background:rgba(8,22,42,.85);clip-path:var(--chamS);
+    display:grid;place-items:center;font-family:'Chakra Petch',sans-serif;font-size:13px;font-weight:700;
+    color:var(--azure);margin-top:1px;box-shadow:inset 0 0 0 1px var(--hair)}
+  .opt.sel{box-shadow:inset 0 0 0 2px var(--azure)}
+  .opt.sel .k{background:var(--azure);color:#031321}
+  .opt.right{background:linear-gradient(165deg, rgba(46,230,168,.22), rgba(6,40,32,.8));
+             box-shadow:inset 0 0 0 1px rgba(46,230,168,.7), inset 0 0 26px rgba(46,230,168,.18)}
+  .opt.right .k{background:var(--go);color:#012418;box-shadow:none}
+  .opt.wrong{background:linear-gradient(165deg, rgba(255,77,99,.2), rgba(44,8,16,.8));
+             box-shadow:inset 0 0 0 1px rgba(255,77,99,.7), inset 0 0 26px rgba(255,77,99,.15)}
+  .opt.wrong .k{background:var(--stop);color:#fff;box-shadow:none}
+  .opt[disabled]{cursor:default}
+
+  .why{margin-top:14px;padding:13px 15px 13px 17px;background:rgba(10,26,48,.8);clip-path:var(--chamS);
+       font-size:15.5px;box-shadow:inset 0 0 0 1px var(--hair), inset 3px 0 0 var(--azure)}
+  .why b{display:block;font-family:'Chakra Petch',sans-serif;font-size:13px;color:var(--dim);
+         font-weight:600;letter-spacing:.05em;margin-bottom:4px}
+  .why.ok{box-shadow:inset 0 0 0 1px rgba(46,230,168,.35), inset 3px 0 0 var(--go)}
+  .why.ok b{color:var(--go)}
+  .why.no{box-shadow:inset 0 0 0 1px rgba(255,77,99,.35), inset 3px 0 0 var(--stop)}
+  .why.no b{color:var(--stop)}
+
+  .signbox{display:grid;place-items:center;padding:10px 0 14px;position:relative}
+  .signbox:before{content:"";position:absolute;width:190px;height:190px;border-radius:50%;
+    background:radial-gradient(circle, rgba(63,208,255,.20), transparent 66%)}
+  .signbox svg{width:154px;height:154px;position:relative;filter:drop-shadow(0 6px 20px rgba(0,0,0,.55))}
+
+  /* ---------- results ---------- */
+  .verdict{text-align:center;padding:24px 0 6px}
+  .verdict .big{font-family:'Chakra Petch',sans-serif;font-size:66px;font-weight:700;line-height:1;
+                text-shadow:0 0 30px rgba(63,208,255,.4)}
+  .verdict .big span{font-size:26px;color:var(--dim)}
+  .verdict .word{font-family:'Chakra Petch',sans-serif;font-size:21px;font-weight:700;letter-spacing:.14em;margin-top:6px}
+  .pass{color:var(--go);text-shadow:0 0 26px rgba(46,230,168,.45)}
+  .fail{color:var(--stop);text-shadow:0 0 26px rgba(255,77,99,.4)}
+  .breakdown{margin-top:20px}
+  .brow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(96,178,255,.14);font-size:15px}
+  .brow .nm{flex:1;min-width:0;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brow .bar{flex:0 0 62px;height:4px;background:rgba(96,178,255,.16);overflow:hidden}
+  .brow .bar i{display:block;height:100%}
+  .brow .n{width:48px;text-align:right;color:var(--dim);font-size:13px;font-family:'Chakra Petch',sans-serif}
+
+  .ach{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:16px}
+  .badge{background:rgba(10,24,44,.6);clip-path:var(--chamS);padding:13px 10px;text-align:center;
+         box-shadow:inset 0 0 0 1px rgba(96,178,255,.14);opacity:.4}
+  .badge.won{opacity:1;background:linear-gradient(165deg, rgba(255,196,71,.14), rgba(12,26,46,.85));
+             box-shadow:inset 0 0 0 1px rgba(255,196,71,.5), inset 0 0 24px rgba(255,196,71,.1)}
+  .badge .em{font-size:24px}
+  .badge b{display:block;font-family:'Chakra Petch',sans-serif;font-size:14px;font-weight:600;margin-top:5px}
+  .badge span{font-size:11.5px;color:var(--dim);display:block;line-height:1.3}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);
+    background:linear-gradient(100deg,var(--amber),#ffd97a);color:#2a1a00;
+    font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:15px;letter-spacing:.03em;
+    padding:11px 20px;clip-path:var(--chamS);opacity:0;pointer-events:none;
+    transition:opacity .25s ease,transform .25s ease;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .sticky{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+          background:linear-gradient(180deg,rgba(4,10,20,0),var(--void) 34%);max-width:620px;margin:0 auto}
+  .sticky .btn{margin-top:0}
+  input[type=date]{
+    background:rgba(8,22,42,.85);color:var(--ice);clip-path:var(--chamS);border:0;
+    box-shadow:inset 0 0 0 1px var(--hair);padding:12px 14px;font-family:inherit;font-size:16px;width:100%}
+  a{color:var(--azure)}
+  :focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--amber)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div id="splash" onclick="closeSplash()">
+  <div class="lwrap"><span class="lhalo"></span><div class="lplate">L</div></div>
+  <p class="sp-hi" id="spHi">Welcome to your theory test garage</p>
+  <h1 class="sp-name">Dante</h1>
+  <p class="sp-sub" id="spSub">Loading your progress…</p>
+  <p class="sp-stats" id="spStats"></p>
+  <button class="sp-go">Start revising</button>
+  <div class="sp-road" aria-hidden="true"></div>
+</div>
+
+<div id="app">
+  <div class="screen on" id="s-home"></div>
+  <div class="screen" id="s-topics"></div>
+  <div class="screen" id="s-quiz"></div>
+  <div class="screen" id="s-result"></div>
+  <div class="screen" id="s-badges"></div>
+  <div class="screen" id="s-settings"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =======================================================================
+   DANTE'S THEORY TEST GARAGE
+   ======================================================================= */
+
+const CATS = {
+  alertness:  {name:'Alertness',                 emoji:'👀'},
+  attitude:   {name:'Attitude',                  emoji:'🤝'},
+  vehicle:    {name:'Safety and your vehicle',   emoji:'🔧'},
+  margins:    {name:'Safety margins',            emoji:'📏'},
+  hazard:     {name:'Hazard awareness',          emoji:'⚠️'},
+  vulnerable: {name:'Vulnerable road users',     emoji:'🚸'},
+  others:     {name:'Other types of vehicle',    emoji:'🚚'},
+  handling:   {name:'Vehicle handling',          emoji:'🎛️'},
+  motorway:   {name:'Motorway rules',            emoji:'🛣️'},
+  rules:      {name:'Rules of the road',         emoji:'📕'},
+  signs:      {name:'Road and traffic signs',    emoji:'🛑'},
+  docs:       {name:'Documents',                 emoji:'📄'},
+  incidents:  {name:'Incidents and emergencies', emoji:'🚑'},
+  loading:    {name:'Vehicle loading',           emoji:'📦'}
+};
+
+/* Scenario blocks — the real test ends with questions built on a short video clip.
+   These work the same way: read the situation, then answer the questions that follow. */
+const CASES = {
+  town:{title:'Scenario · town centre',
+    text:"It's a wet Tuesday afternoon and you're driving through a town centre. The limit is 30mph and there are cars parked on both sides. A primary school is on your left and children are on the pavement. Ahead of you a bus has stopped at a bus stop, and a cyclist is coming up behind it."},
+  country:{title:'Scenario · country road',
+    text:"You're on a single carriageway country road at dusk, where the national speed limit applies. The hedges are high and the bends are blind. There's mud on the road near a farm gate. You catch up with a tractor doing around 20mph, and a car behind you is sitting very close to your rear bumper."},
+  motorway:{title:'Scenario · motorway in rain',
+    text:"You join a three-lane motorway in heavy rain. The overhead gantry shows a red X above lane three and a 50mph limit above the other two. Spray is heavy enough to blur the vehicles ahead, and a lorry has started to overtake you."}
+};
+
+/* q = question, o = options, a = correct index (or an array for 'mark two'), e = explanation */
+const BANK = [
+{"c":"alertness","q":"You're about to move off from the kerb. What must you do last, after your mirror checks?","o":["Look over your shoulder into the blind spot","Check your mirrors a second time","Signal for at least five seconds","Release the handbrake before signalling"],"a":0,"e":"Mirrors don't cover everything. A final blind-spot check over your shoulder catches the cyclist or motorbike your mirrors miss."},
+{"c":"alertness","q":"You need to take a call while driving. What's the only safe thing to do?","o":["Stop in a safe place first, then call back","Answer it but keep your speed down","Use it only while stopped at lights","Hold it on speaker so both hands are free-ish"],"a":0,"e":"Using a hand-held phone at the wheel is illegal — including at traffic lights, because you're still in charge of the vehicle. Park somewhere safe and legal first."},
+{"c":"alertness","q":"Why is it a bad idea to hang air fresheners and fluffy dice from your mirror?","o":["They restrict your view of the road","They drain the battery","They invalidate your MOT","They interfere with the radio"],"a":0,"e":"Anything swinging in your line of sight blocks your view and pulls your eyes off the road. Keep the windscreen area clear."},
+{"c":"alertness","q":"You're getting drowsy on a long drive on the motorway. What should you do?","o":["Leave at the next exit or services and rest","Stop on the hard shoulder for a short nap","Open a window and turn the radio up","Reduce your speed and continue to your destination"],"a":0,"e":"Fresh air and loud music only mask tiredness. Pull off at services, have a caffeinated drink and a short nap of around 15 minutes."},
+{"c":"alertness","q":"When may you sound your horn?","o":["To warn others of your presence","To tell a slow driver to hurry up","To greet a friend on the pavement","To show annoyance at a bad manoeuvre"],"a":0,"e":"The horn is a warning of your presence, never a telling-off. Don't use it in a built-up area between 11.30pm and 7am unless another moving vehicle poses a danger."},
+{"c":"alertness","q":"You're following a large lorry and thinking about overtaking. Why should you drop back?","o":["To improve your view of the road ahead","To save fuel","To let the lorry accelerate","To keep out of its mirrors"],"a":0,"e":"Sitting close to a lorry gives you a wall of trailer instead of a view. Drop back and you can see past it, and the driver can see you."},
+{"c":"alertness","q":"Your windscreen is misted up inside on a cold morning. What should you do before driving off?","o":["Clear all the windows properly","Drive slowly until it clears itself","Wipe a small patch in front of you","Open both front windows"],"a":0,"e":"You must be able to see out of every window. Use the blowers and demisters and clear the lot — a peephole isn't legal or safe."},
+{"c":"alertness","q":"You want to turn into a side road but parked cars block your view of the traffic. What should you do?","o":["Creep forward slowly until you can see clearly","Rely on the sound of traffic","Wave other drivers past and follow them","Emerge quickly to spend less time exposed"],"a":0,"e":"Move forward a little at a time until your view opens up. Never gamble on a junction you can't see."},
+{"c":"alertness","q":"Why should you avoid playing music at very high volume while driving?","o":["It can mask emergency vehicle sirens and other warnings","It uses more fuel","It distracts other drivers","It damages the speakers"],"a":0,"e":"Hearing is part of your hazard awareness — sirens, horns, a level crossing alarm. Keep the volume where you can still hear the road."},
+{"c":"alertness","q":"When should you set up your satnav?","o":["Before you start the journey","At the first set of traffic lights","While driving slowly in traffic","Whenever the route changes"],"a":0,"e":"Programme it while parked. Fiddling with a screen on the move is the same distraction as a phone, and you can be prosecuted for it."},
+{"c":"alertness","q":"You're approaching a right-hand bend. Where should you position your car?","o":["Keep well to the left to open up your view","Move out towards the centre line","Straddle the centre line to straighten the bend","Keep left but hold your speed through the bend"],"a":0,"e":"On a right-hand bend, staying left opens up your sightline. Do your slowing and gear change before the bend, not in it."},
+{"c":"alertness","q":"You're dazzled by low sun ahead. What's the best response?","o":["Slow down and use the sun visor","Put your hazard lights on","Switch to full beam","Follow the vehicle in front closely"],"a":0,"e":"If you can't see properly, reduce speed until you can. A visor, clean windscreen and sunglasses all help."},
+{"c":"alertness","q":"What does 'effective observation' at a junction mean?","o":["Looking properly in both directions and acting on what you see","Glancing once as you emerge","Watching only for cars, not bikes","Checking your mirrors only"],"a":0,"e":"Look, and keep looking — especially for motorcyclists and cyclists, who are easily hidden behind a windscreen pillar."},
+{"c":"alertness","q":"You want to reverse into a side road. Why is this safer than reversing out of one?","o":["You emerge into the main road facing forward with a full view","It uses less fuel","Reversing out is illegal everywhere","You can see your mirrors better"],"a":0,"e":"Reversing into the side road means you rejoin the busy road driving forwards, where your view and control are best."},
+{"c":"alertness","q":"You're waiting to emerge at a junction and the windscreen pillar blocks part of your view. What should you do?","o":["Move your head to look around the pillar","Rely on your door mirror instead","Wait for the driver behind to signal you out","Assume the road is clear if you can't hear anything"],"a":0,"e":"The pillar can hide an entire motorcycle. A small lean or head movement removes the blind spot completely."},
+{"c":"alertness","q":"Hands-free phone calls are legal. Why are they still risky?","o":["The conversation takes your attention off driving","They drain the car battery","They interfere with the ABS","They are only legal above 30mph"],"a":0,"e":"The danger isn't the hands, it's the head. A conversation with someone who can't see the road ahead splits your concentration."},
+{"c":"attitude","q":"A driver behind is following you far too closely. What should you do?","o":["Ease off gently and increase the gap in front","Brake lightly to warn them to drop back","Hold your speed and ignore them","Move over and slow sharply to let them past"],"a":0,"e":"You can't control them, but you can buy yourself room. A bigger gap ahead means you brake gently instead of suddenly."},
+{"c":"attitude","q":"At a zebra crossing, when must you give way?","o":["As soon as a pedestrian has stepped onto the crossing","Only if they are halfway across","Only if they raise a hand","Only when the beacons are flashing"],"a":0,"e":"Once someone has stepped onto a zebra crossing they have priority. Approach at a speed that lets you stop, and never wave people across."},
+{"c":"attitude","q":"A bus is signalling to pull out from a bus stop ahead. What should you do?","o":["Give way if it's safe to do so","Continue — you have priority on the main road","Overtake before the bus starts to move","Stop and wave the bus out"],"a":0,"e":"The Highway Code asks drivers to give way to buses signalling to move off, provided you can do it safely."},
+{"c":"attitude","q":"What does flashing your headlights at another driver officially mean?","o":["I am here — it's a warning of your presence","Come on through","Thank you","Get out of my way"],"a":0,"e":"It means the same as the horn: I'm here. If someone flashes at you, don't assume it's an invitation — check for yourself before moving."},
+{"c":"attitude","q":"An ambulance with flashing blue lights is coming up behind you. What should you do?","o":["Pull over where it's safe and let it pass","Stop immediately wherever you are","Continue at the same speed until it overtakes","Move into a bus lane to clear the way"],"a":0,"e":"Help it through without endangering anyone — don't stop on a bend, brow of a hill, or break the law by entering a bus lane or red light to do it."},
+{"c":"attitude","q":"You're in a queue of traffic and a driver is trying to join from a side road. What's the considerate thing to do?","o":["Leave a gap and let them in when it's safe","Close the gap to keep the queue moving","Wave them out when you can't see the next lane","Stop in the junction to hold your place"],"a":0,"e":"Letting one car in costs you seconds and keeps the junction clear. Blocking it causes gridlock behind."},
+{"c":"attitude","q":"When should you use your rear fog lights?","o":["When visibility is seriously reduced, generally below 100 metres","In heavy rain at night","Whenever it is dark","On unlit country roads"],"a":0,"e":"Fog lights dazzle drivers behind and can hide your brake lights. Switch them off the moment visibility improves."},
+{"c":"attitude","q":"You're driving at the speed limit and a car behind wants to overtake. What should you do?","o":["Allow it to overtake when it's safe","Hold your position — you're at the legal limit","Move towards the centre of the road to discourage it","Slow right down and force it past"],"a":0,"e":"It isn't your job to police other people's speed. Hold your line and let them past — a frustrated driver behind you is a hazard."},
+{"c":"attitude","q":"What should you do when approaching a pelican crossing where the amber light is flashing?","o":["Give way to pedestrians already on the crossing","Wait until the green light shows before moving","Continue — pedestrians must wait for you","Move off slowly across the crossing"],"a":0,"e":"Flashing amber means you may go on if the crossing is clear, but pedestrians on it still have priority."},
+{"c":"attitude","q":"You're the first vehicle at a red light and a fire engine with sirens needs to pass. What should you do?","o":["Stay put until it's safe and legal to move out of the way","Drive through the red light immediately","Reverse away from the lights","Turn off your engine"],"a":0,"e":"Never break the law or endanger others to get out of the way. Wait until you can move safely — the crew would rather that than a collision."},
+{"c":"attitude","q":"A vehicle towing a caravan is holding up a long queue. What's the right attitude?","o":["Stay back and overtake only when you can see it's clear","Move out repeatedly to look for a gap","Follow closely so you're ready to pass","Overtake as soon as the road straightens"],"a":0,"e":"Tailgating slow vehicles won't make them faster. Hang back, keep your view good, and wait for a genuinely safe overtaking chance."},
+{"c":"attitude","q":"What is 'tailgating'?","o":["Driving too close to the vehicle in front","Overtaking on the left","Reversing out of a driveway","Driving with your boot open"],"a":0,"e":"It removes your reaction space and intimidates the driver ahead. Use the two-second rule as your minimum in good conditions."},
+{"c":"attitude","q":"You're on a narrow road with an obstruction on your side. What should you do?","o":["Give way to oncoming traffic","Carry on — oncoming traffic must give way","Move out and stop alongside the obstruction","Reverse back to the previous junction"],"a":0,"e":"The obstruction is on your side, so it's your job to wait. Courtesy here keeps traffic moving for everyone."},
+{"c":"attitude","q":"How should you use your headlights at night on an unlit road when another vehicle is coming towards you?","o":["Dip them before they reach you","Keep them on full beam","Switch them off completely","Flash them twice"],"a":0,"e":"Dazzling an oncoming driver blinds them for several seconds. Dip early and only go back to full beam once they've passed."},
+{"c":"attitude","q":"You're stationary in traffic and a pedestrian wants to cross between the queuing cars. What should you do?","o":["Keep watching and be ready to stop other movement","Wave them across in front of you","Move forward to close the gap","Edge out to see past the queue"],"a":0,"e":"Never wave anyone across — you can't see the lane beside you, and a passing cyclist or motorcyclist may not stop."},
+{"c":"attitude","q":"What's the most important reason not to drive aggressively?","o":["It increases the risk of a collision for everyone","It uses slightly more fuel","It wears the tyres","It annoys passengers"],"a":0,"e":"Anger narrows your judgement and shortens the gaps you leave. Every road rage statistic starts with someone deciding to make a point."},
+{"c":"vehicle","q":"What's the legal minimum tread depth for car tyres in the UK?","o":["1.6mm","1.0mm","2.5mm","3.0mm"],"a":0,"e":"1.6mm across the central three-quarters of the tread and around the whole circumference. Below that it's a fine and penalty points per tyre."},
+{"c":"vehicle","q":"When should you check your tyre pressures?","o":["When the tyres are cold","Straight after a long motorway drive","Only when a tyre looks flat","Once a year at the MOT"],"a":0,"e":"Hot tyres read high and give you a false answer. Check them cold, at least every couple of weeks, and don't forget the spare."},
+{"c":"vehicle","q":"At what age does a car normally need its first MOT test?","o":["Three years old","One year old","Five years old","Ten years old"],"a":0,"e":"Most cars need an MOT from three years old, then annually. Driving without a valid MOT can also invalidate your insurance."},
+{"c":"vehicle","q":"Your steering feels vague and the car pulls to one side. What's the most likely cause?","o":["Incorrect tyre pressures or a tyre problem","Low screen wash","A dirty air filter","A flat spare"],"a":0,"e":"Uneven or low pressures affect grip, steering and braking, and wear the tyres out faster. Check pressures first."},
+{"c":"vehicle","q":"What should you do with an old car battery, engine oil and used tyres?","o":["Take them to an authorised disposal site","Put them in your household recycling bin","Leave them beside a public recycling point","Take them to any council refuse bin"],"a":0,"e":"They're all hazardous waste. Local authority sites and garages take them — pouring oil down a drain is an offence."},
+{"c":"vehicle","q":"How can you reduce the fuel your car uses?","o":["Drive smoothly and avoid harsh acceleration","Carry extra weight for stability","Keep the revs high in low gears","Brake late and hard"],"a":0,"e":"Gentle inputs, reading the road ahead, correct tyre pressures and removing unused roof racks all cut consumption and emissions."},
+{"c":"vehicle","q":"What does a catalytic converter do?","o":["Reduces harmful exhaust emissions","Increases engine power","Improves fuel gauge accuracy","Silences the engine completely"],"a":0,"e":"It converts much of the toxic content of exhaust gases into less harmful substances. A failing one will fail the MOT emissions test."},
+{"c":"vehicle","q":"You're parking on a hill facing uphill with no kerb. What should you do?","o":["Leave it in first gear and apply the handbrake","Leave it in neutral","Turn the wheels towards the middle of the road","Leave it in reverse with the handbrake off"],"a":0,"e":"Handbrake on, in gear, and turn the wheels so the car would roll away from the road if the brake slipped."},
+{"c":"vehicle","q":"What's the main reason for keeping your windscreen washer bottle topped up?","o":["So you can clear the screen and keep good visibility","To cool the engine","To improve wiper life only","To reduce emissions"],"a":0,"e":"Dirty spray from a lorry can blind you in a second. Add screen wash rather than plain water so it doesn't freeze."},
+{"c":"vehicle","q":"What's most likely to cause excessive or uneven tyre wear?","o":["Faulty steering alignment or suspension","A worn clutch","Low screen wash","A dirty battery terminal"],"a":0,"e":"Misaligned wheels scrub the tread away on one edge. Get the tracking checked if you see a wear pattern developing."},
+{"c":"vehicle","q":"Which of these is a legal requirement before you drive?","o":["That your lights and indicators work correctly","That your car is washed","That you carry a first aid kit","That you carry a warning triangle"],"a":0,"e":"Lights, brakes, tyres, mirrors and washers must all work. First aid kits and triangles are sensible but not compulsory in the UK."},
+{"c":"vehicle","q":"How can you help the environment when choosing how to make a short local journey?","o":["Walk, cycle or use public transport instead","Always take the car for speed","Use a larger vehicle","Drive with the windows down"],"a":0,"e":"Cold engines are at their least efficient and most polluting. Short car trips produce the most emissions per mile."},
+{"c":"vehicle","q":"Your brake fluid warning light comes on. What should you do?","o":["Stop as soon as it's safe and have it checked","Continue if the brakes still feel normal","Top up the reservoir and carry on regardless","Pump the pedal to restore pressure"],"a":0,"e":"A brake system warning means possible brake failure. Don't gamble on it — get it checked before continuing."},
+{"c":"vehicle","q":"When must you use headlights?","o":["At night, and when visibility is seriously reduced","Only on motorways","Only in towns","Only when it rains"],"a":0,"e":"Sidelights alone aren't enough after dark. Use dipped headlights whenever it's dark or visibility drops."},
+{"c":"vehicle","q":"What is the purpose of a properly adjusted head restraint?","o":["To reduce neck injury in a collision","To make the seat more comfortable","To hold the seat belt in place","To block the rear view"],"a":0,"e":"The rigid part should be level with the top of your head, not your neck, so it supports your head in a rear-end shunt."},
+{"c":"vehicle","q":"Who is responsible for making sure a child under 14 is properly restrained in your car?","o":["You, the driver","The child's parent, wherever they are","The child","Nobody — it's advisory"],"a":0,"e":"The driver is legally responsible for passengers under 14 wearing seat belts or using the correct child restraint."},
+{"c":"vehicle","q":"What's the benefit of anti-lock brakes (ABS)?","o":["They help you keep steering control during emergency braking","They reduce your stopping distance on ice","They mean you can brake later in all conditions","They work only in reverse"],"a":0,"e":"ABS stops the wheels locking so you can steer while braking hard. It doesn't shorten stopping distances on loose or icy surfaces."},
+{"c":"margins","q":"What is the overall stopping distance at 70mph in good, dry conditions?","o":["96 metres (about 315 feet)","53 metres (about 175 feet)","73 metres (about 240 feet)","36 metres (about 118 feet)"],"a":0,"e":"At 70mph it's 21m thinking plus 75m braking — 96m in total, about the length of 24 cars."},
+{"c":"margins","q":"What is the typical overall stopping distance at 30mph?","o":["23 metres (about 75 feet)","12 metres (about 40 feet)","36 metres (about 118 feet)","53 metres (about 175 feet)"],"a":0,"e":"9m thinking plus 14m braking. Worth memorising the set: 12, 23, 36, 53, 73, 96 metres for 20 to 70mph."},
+{"c":"margins","q":"In wet weather, how should you adjust your following distance?","o":["At least double the two-second gap","Keep it the same","Halve it to stay in the flow","Add half a second"],"a":0,"e":"Wet roads roughly double stopping distances, so a four-second gap is the minimum. On ice, allow up to ten times the dry distance."},
+{"c":"margins","q":"What's the two-second rule?","o":["The minimum time gap to the vehicle in front in good conditions","The time to indicate before turning","How long to wait at a junction","How long to hold the clutch down"],"a":0,"e":"Pick a fixed point, and if you reach it before saying 'only a fool breaks the two-second rule', you're too close."},
+{"c":"margins","q":"You're driving in fog. What should you do?","o":["Slow down, use dipped headlights and increase your gap","Use full beam so you can see further","Keep close to the tail lights ahead for guidance","Use sidelights only to avoid dazzling others"],"a":0,"e":"Full beam reflects off fog and makes it worse. Slow down enough to stop within the distance you can actually see to be clear."},
+{"c":"margins","q":"What is aquaplaning?","o":["Tyres riding on a film of water and losing contact with the road","Water leaking into the cabin","Wipers failing at speed","Brakes overheating in the rain"],"a":0,"e":"Steering goes light and unresponsive. Ease off the accelerator, don't brake hard, and let the speed drop until the tyres grip again."},
+{"c":"margins","q":"After driving through deep water, what should you do?","o":["Test your brakes gently when it's safe","Accelerate hard to dry them","Apply the handbrake at speed","Nothing — they're unaffected"],"a":0,"e":"Wet brakes are much less effective. Drive slowly with light pressure on the pedal to dry them out before you need them."},
+{"c":"margins","q":"You're driving on an icy road. What's the main clue that you've lost grip?","o":["The steering feels very light","The engine revs drop","The wipers slow down","The heater stops working"],"a":0,"e":"Light, vague steering and an eerie quietness from the tyres both suggest ice. Reduce speed very gently — no sharp inputs."},
+{"c":"margins","q":"How should you brake on a slippery surface?","o":["Gently and in good time, using the highest suitable gear","Firmly and late","Using the handbrake","With the clutch down"],"a":0,"e":"Smooth, early, light braking keeps the tyres rolling. Sudden inputs are what cause skids on low-grip surfaces."},
+{"c":"margins","q":"Your car begins to skid with the rear sliding to the right. What should you do?","o":["Ease off the pedals and steer to the right","Brake hard and hold the wheel straight","Steer left to counter it","Pull the handbrake on"],"a":0,"e":"Steer into the skid — the direction the rear has gone — and remove the cause by easing off the accelerator or brake."},
+{"c":"margins","q":"When are contraflow systems most likely to catch drivers out?","o":["Because lanes are narrow and speed limits are lower","Because there are no road markings","Because the hard shoulder is wider","Because overtaking is compulsory"],"a":0,"e":"Reduce speed in good time, keep a safe gap, and don't change lanes unnecessarily — there's less room for error."},
+{"c":"margins","q":"Why should you leave an extra-large gap when following a motorcyclist on a wet road?","o":["They may brake or swerve to avoid slippery surfaces","They always travel faster","They cannot see behind them","Their brakes are stronger"],"a":0,"e":"Painted lines, drain covers and diesel spills are far more dangerous on two wheels, so riders often move around suddenly."},
+{"c":"margins","q":"What effect does coasting (rolling with the clutch down or in neutral) have?","o":["It reduces your control, especially braking and steering","It saves a lot of fuel","It improves grip in the wet","It helps in fog"],"a":0,"e":"You lose engine braking and the ability to accelerate out of trouble. Keep the car in gear, particularly downhill."},
+{"c":"margins","q":"You're driving down a long, steep hill. What should you do?","o":["Select a lower gear and use engine braking","Stay in top gear and ride the brakes","Coast in neutral to save fuel","Use the handbrake to slow down"],"a":0,"e":"Constant braking makes brakes fade and lose effectiveness. A lower gear lets the engine hold the car back."},
+{"c":"margins","q":"In very hot weather the road surface can become soft. What effect does this have?","o":["Grip and braking are reduced","Tyres last longer","Steering becomes heavier","Stopping distances shorten"],"a":0,"e":"Melting tar reduces tyre grip, so slow down and avoid sudden steering or braking."},
+{"c":"margins","q":"What's the safest way to use the brakes when stopping in normal conditions?","o":["Brake early and progressively, easing off at the end","Brake as late as possible","Pump the pedal rapidly","Use the handbrake at the last moment"],"a":0,"e":"Progressive braking is smoother for passengers, kinder to the car, and gives drivers behind far more warning."},
+{"c":"hazard","q":"What's the safest way to deal with a hazard you can see developing well ahead?","o":["Slow down early and plan your response","Hold your speed and be ready to brake","Move out to pass it as quickly as possible","Wait until you're closer before deciding"],"a":0,"e":"Early, gentle action gives you options. Late reaction leaves you only one choice — usually braking hard."},
+{"c":"hazard","q":"You're approaching a row of parked cars with a ball rolling into the road. What should you expect?","o":["A child may run out after it","A dog is chasing it","Nothing — carry on at the same speed","The road is closed ahead"],"a":0,"e":"Cover the brake and slow right down. Where there's a ball there's often a child who isn't looking at the road."},
+{"c":"hazard","q":"You've been prescribed medicine that may cause drowsiness. What should you do?","o":["Check with your doctor or pharmacist before driving","Drive but take extra care","Take a double dose to get it over with","Drink coffee to counteract it"],"a":0,"e":"Driving while impaired by legal medication is still an offence. Ask whether it's safe before you get behind the wheel."},
+{"c":"hazard","q":"What should you do if you feel anxious or upset before setting off?","o":["Wait until you have calmed down before driving","Set off slowly and take extra care","Take a quieter route to avoid traffic","Open the windows to get some air"],"a":0,"e":"Strong emotion makes drivers impatient and less observant. Give yourself a few minutes before you start the engine."},
+{"c":"hazard","q":"A bus has stopped ahead at a bus stop on your side of the road. What should you do?","o":["Slow down and watch for pedestrians stepping out","Pass close to the bus to save time","Move out only once the bus indicates","Follow the bus closely until it moves off"],"a":0,"e":"People step out from in front of buses without looking. Pedestrians, and the bus pulling away, are both hazards here."},
+{"c":"hazard","q":"What does 'covering the brake' mean?","o":["Moving your foot over the brake pedal ready to use it","Pressing the brake lightly at all times","Resting your foot on the pedal while driving","Using the handbrake as well"],"a":0,"e":"It cuts your reaction time when you've spotted a possible hazard, without actually slowing the car."},
+{"c":"hazard","q":"You're following a car that keeps braking for no obvious reason. What should you do?","o":["Increase your following distance and stay alert","Overtake as soon as there's a gap","Stay close so you can react quickly","Pull alongside to see what's wrong"],"a":0,"e":"Erratic driving is a hazard in itself — the driver may be lost, distracted or unwell. Give yourself extra space."},
+{"c":"hazard","q":"How does alcohol affect your driving?","o":["It slows reactions and creates false confidence","It improves concentration","It only affects you the next day","It has no effect below the limit"],"a":0,"e":"Even small amounts impair judgement while making you feel more capable — the most dangerous combination there is."},
+{"c":"hazard","q":"You've been drinking heavily in the evening. When might you still be over the limit?","o":["The following morning","Two hours later only","Never, after a night's sleep","Only if you drink again"],"a":0,"e":"The body clears alcohol slowly, around one unit an hour. Morning-after drink-driving arrests are extremely common."},
+{"c":"hazard","q":"Where are you most likely to find hazards you can't see until the last moment?","o":["On narrow country lanes with high hedges","On a straight dual carriageway","In a supermarket car park","On a motorway slip road"],"a":0,"e":"Blind bends, mud, horses, walkers and slow farm vehicles all hide behind hedges. Drive at a speed that lets you stop in the distance you can see to be clear."},
+{"c":"hazard","q":"You see a triangular sign with a picture of children. What should you do?","o":["Reduce speed and watch for children near the road","Expect a crossing patrol to stop you","Stop and wait for children to cross","Expect the children to be supervised"],"a":0,"e":"It warns of a school or playground. Children are unpredictable, so be ready to stop."},
+{"c":"hazard","q":"What should you do if your concentration begins to drift on a familiar route?","o":["Re-focus, and stop for a break if it continues","Turn the radio up to stay alert","Open a window and carry on","Drive a little faster to stay engaged"],"a":0,"e":"Familiar roads are where drivers switch off. If your mind is wandering, you're not observing — take a break."},
+{"c":"hazard","q":"You're approaching a junction where a car is waiting to emerge. What should you consider?","o":["The driver may not have seen you and could pull out","They have to give way, so you can maintain speed","They'll have seen you if your lights are on","They'll only pull out if you slow down"],"a":0,"e":"Right of way is not the same as safety. Watch the front wheels and the driver's head for clues about what they'll do."},
+{"c":"hazard","q":"Why are older drivers and pedestrians sometimes more at risk?","o":["Their reactions, hearing or eyesight may be slower","They always drive too fast","They never use crossings","They ignore road signs"],"a":0,"e":"Give them more time at crossings and junctions rather than pressuring them."},
+{"c":"hazard","q":"You're on a country road and see mud on the surface near a farm entrance. What should you do?","o":["Slow down — grip is reduced and farm traffic may emerge","Keep to the crown of the road and hold your speed","Brake firmly to test how much grip you have","Change down and accelerate through it"],"a":0,"e":"Mud is slippery, especially in the wet, and signals farm traffic turning in and out."},
+{"c":"hazard","q":"What is the effect of using illegal drugs before driving?","o":["Serious impairment and a driving ban if caught","Improved reaction times","No effect if you feel fine","Legal as long as you're under the limit"],"a":0,"e":"There are roadside tests and specific legal limits for drug driving. Penalties match those for drink driving."},
+{"c":"vulnerable","q":"How much room should you leave when overtaking a cyclist?","o":["At least as much room as you'd give a car — 1.5 metres or more","About half a metre","Just enough to pass","No specific amount"],"a":0,"e":"The Highway Code asks for at least 1.5m at speeds up to 30mph, and more above that. Wait if you can't give that space."},
+{"c":"vulnerable","q":"You're turning left and a cyclist is riding on your inside. What should you do?","o":["Hold back and let the cyclist go first","Turn in front of them, as you're already signalling","Move left to block them before turning","Overtake and then turn across their path"],"a":0,"e":"Cutting across a cyclist on your nearside is one of the most common causes of serious cycling injuries. Wait."},
+{"c":"vulnerable","q":"What does a flashing amber beacon on a slow-moving vehicle warn you of?","o":["The vehicle travels much slower than other traffic","The driver is learning","There is an emergency","The vehicle is broken down"],"a":0,"e":"Used by tractors, gritters and mobility scooters on dual carriageways. Slow early — you'll close the gap much faster than you expect."},
+{"c":"vulnerable","q":"You're approaching horse riders on a narrow road. What should you do?","o":["Slow right down and pass wide and slowly","Pass quickly to spend less time alongside","Stop and switch off your engine until they pass","Stay close behind until the road widens"],"a":0,"e":"Pass at no more than 10mph and leave at least 2 metres. Horses are easily startled by noise and close, fast vehicles."},
+{"c":"vulnerable","q":"What should you look out for when passing parked cars in a residential street?","o":["Doors opening and children stepping out","Overhanging trees","Loose gravel only","Speed cameras"],"a":0,"e":"Leave a door's width where you can, and drop your speed. Look through car windows for movement inside."},
+{"c":"vulnerable","q":"A pedestrian is walking on the right-hand side of a country road at night. Why?","o":["So they can see oncoming traffic","Because it's illegal to walk on the left","To be nearer the hedge","Because the ground is flatter"],"a":0,"e":"Walking towards oncoming traffic is the recommended practice where there's no pavement. Give them plenty of room."},
+{"c":"vulnerable","q":"Which group of road users is hardest to see at junctions?","o":["Motorcyclists and cyclists","Lorry drivers","Bus drivers","Van drivers"],"a":0,"e":"They're narrow, quick and easily hidden by a windscreen pillar. Take a second look before you pull out."},
+{"c":"vulnerable","q":"You see a person with a white stick with red bands. What does this tell you?","o":["They are deaf as well as blind","They are a driving instructor","They are a traffic warden","They have a hearing aid only"],"a":0,"e":"Red bands indicate deafblindness, so they may not hear your vehicle at all. Give them plenty of time to cross."},
+{"c":"vulnerable","q":"What should you do when driving past a school where a crossing patrol is showing a STOP sign?","o":["Stop and wait until the patrol has cleared the crossing","Slow down and pass if no children are crossing","Stop only once children are in the road","Treat it as a give way sign"],"a":0,"e":"It's a legal requirement to stop. Only move off once the patrol has returned to the pavement and signalled you on."},
+{"c":"vulnerable","q":"Why do motorcyclists sometimes change position within their lane?","o":["To improve their view and avoid surface hazards","To confuse other drivers","Because their bike is faulty","To signal a turn"],"a":0,"e":"They're dealing with potholes, drains and wind. Expect the movement and don't crowd them."},
+{"c":"vulnerable","q":"What is a toucan crossing?","o":["A crossing where cyclists and pedestrians cross together","A crossing with no lights","A crossing for horse riders","A crossing only for school children"],"a":0,"e":"Two can cross — cyclists may ride across rather than dismounting. Watch for the higher approach speed of bikes."},
+{"c":"vulnerable","q":"Elderly pedestrians are crossing slowly in front of you and the lights turn green. What should you do?","o":["Wait until they have finished crossing","Move off slowly and pass behind them","Edge forward so they hurry across","Move off — the green light gives you priority"],"a":0,"e":"Pedestrians on the crossing keep priority. Rushing someone who can't move quickly is how people get hurt."},
+{"c":"vulnerable","q":"You're driving past a group of children playing near the road. What should you do?","o":["Slow down and be ready to stop","Hold your speed but watch them closely","Move to the centre of the road and continue","Stop and wave them across"],"a":0,"e":"Children have poor judgement of speed and distance, and can dart out without warning."},
+{"c":"vulnerable","q":"What does a green flashing beacon on a vehicle mean?","o":["A doctor is answering an emergency call","The vehicle is a gritter","It's a slow-moving vehicle","The vehicle is broken down"],"a":0,"e":"Give way when it's safe if you can — they're on their way to a medical emergency."},
+{"c":"vulnerable","q":"Where should you expect learner drivers to have difficulty?","o":["At junctions, roundabouts and hill starts","Only on motorways","Only in car parks","Only at night"],"a":0,"e":"Be patient. Stalling and hesitation are normal — pressuring a learner makes it worse, and you were one very recently."},
+{"c":"vulnerable","q":"A powered mobility scooter is travelling along the road ahead at low speed. What should you do?","o":["Be patient and pass only when it's safe with plenty of room","Pass close by to get past quickly","Follow closely so they know you're there","Expect them to pull onto the pavement"],"a":0,"e":"They're entitled to use the road and are extremely vulnerable. Treat them like any slow, fragile vehicle."},
+{"c":"others","q":"You're overtaking a long lorry on a dual carriageway. What should you be aware of?","o":["It takes far longer than overtaking a car, so you need a much bigger gap","Lorries always slow down to help","You can cut back in immediately","Lorries have shorter stopping distances"],"a":0,"e":"You may be alongside for a long stretch. Only start if you can see the whole move through, and don't pull back in until the lorry appears in your mirror."},
+{"c":"others","q":"A lorry is turning left at a roundabout but has moved out to the right first. Why?","o":["It needs the extra room to get round the corner","The driver has made a mistake","It's going straight on","It's letting you pass on the left"],"a":0,"e":"Long vehicles swing out to take a tight turn. Never move up the inside of one that's positioned oddly — that gap will close."},
+{"c":"others","q":"What should you do when following a bus that's approaching a stop?","o":["Hold back and be ready for it to pull in and out","Overtake on the inside as it slows","Stay close so you can pass the moment it stops","Expect passengers to wait until it moves off"],"a":0,"e":"Passengers may cross in front of it and the bus may pull away. Give way to a bus signalling to move off where safe."},
+{"c":"others","q":"You're behind a tractor on a narrow road. What's the safest approach?","o":["Stay well back until you have a long, clear view to overtake","Overtake on a bend","Flash to make it pull over","Follow closely to pressure it"],"a":0,"e":"Tractors are wide, slow and may turn into a field without much warning. Patience costs you a minute at most."},
+{"c":"others","q":"Why are vehicles towing caravans affected more by strong side winds?","o":["The large flat sides catch the wind and can cause snaking","They are heavier","They have smaller wheels","They have poor brakes"],"a":0,"e":"Give them a wide berth when overtaking, especially on exposed bridges and open stretches."},
+{"c":"others","q":"What should you do before overtaking a motorcyclist who is riding slowly in the centre of the lane?","o":["Wait until there's plenty of room and they've seen you","Pass within the same lane where it's wide enough","Move up close to encourage them to move left","Overtake on their nearside"],"a":0,"e":"A rider in the middle of the lane is claiming space for a reason. Change lanes fully to pass."},
+{"c":"others","q":"Trams are running on the road ahead. What should you remember?","o":["Trams can't steer around you, so give way","They must give way to cars","They stop very quickly","They always use a separate road"],"a":0,"e":"Trams are on fixed rails and take a long distance to stop. The rails themselves are slippery, especially for two-wheelers."},
+{"c":"others","q":"What extra hazard does a vehicle with a long load create?","o":["It may swing out at junctions and bends","It uses more fuel","It has brighter lights","It always travels slowly"],"a":0,"e":"Long or projecting loads must be marked, but the real risk is the swing — stay back and don't try to squeeze past."},
+{"c":"others","q":"You're driving behind a large vehicle and can't see its mirrors. What does this mean?","o":["The driver can't see you","Your lights are off","The lorry is reversing","You should overtake now"],"a":0,"e":"If you can't see the mirror, the driver can't see you. Drop back until you can."},
+{"c":"others","q":"Why should you take extra care when passing a horse box or livestock transporter?","o":["The load can move and unbalance the vehicle","They accelerate very quickly","They have no brakes","They are exempt from speed limits"],"a":0,"e":"A shifting animal load makes the vehicle less stable, so give it room and pass smoothly."},
+{"c":"others","q":"What should you do if a bus is stopped in a bus lane and you need to pass?","o":["Check the sign to see whether the lane is open to you","You may always use a bus lane to pass a stopped bus","Wait behind the bus until it moves off","Cross the solid white line to pass on the right"],"a":0,"e":"Bus lane signs give the hours of operation. Outside those hours you may use it, but check before you do."},
+{"c":"others","q":"An articulated lorry is reversing into a yard across the road. What should you do?","o":["Wait patiently — never pass behind or in front","Pass in front of the cab while it's stationary","Pass behind the trailer as it swings out","Flash your headlights to show you're waiting"],"a":0,"e":"The driver has huge blind spots and the trailer sweeps a wide arc. Hold back until the manoeuvre is finished."},
+{"c":"handling","q":"When may you use hazard warning lights while moving?","o":["On a motorway or dual carriageway to warn of a hazard or queue ahead","Whenever you park illegally","When driving slowly in fog","To thank another driver"],"a":0,"e":"Use them briefly to warn traffic behind of an obstruction ahead, then switch them off."},
+{"c":"handling","q":"What should you do when driving on a road with traffic calming humps?","o":["Keep your speed low and even through the section","Brake at each hump and accelerate between them","Straddle the humps with one wheel on the kerb","Drive along the centre line to avoid them"],"a":0,"e":"Accelerating between humps wastes fuel, wears the car and defeats the point — the area has them for a reason."},
+{"c":"handling","q":"You're driving at night on a single carriageway. When should you use full beam?","o":["When the road ahead is clear of other vehicles","When following another car","Whenever it is dark","Only in built-up areas"],"a":0,"e":"Dip for oncoming traffic and when following, because full beam dazzles through mirrors too."},
+{"c":"handling","q":"What does a 'box junction' with yellow criss-cross markings mean?","o":["Don't enter unless your exit is clear","Stop and give way","Parking is allowed","You may wait for a gap in the box"],"a":0,"e":"The one exception: you may wait in the box when turning right and you're only held up by oncoming traffic."},
+{"c":"handling","q":"You're driving through a tunnel. What should you do before entering?","o":["Remove sunglasses and check your fuel and radio","Switch off your lights","Increase speed","Use full beam"],"a":0,"e":"Take off sunglasses, switch on dipped headlights, tune in to any announced radio channel and keep a safe gap."},
+{"c":"handling","q":"What should you do when driving on a road with a series of sharp bends signed as such?","o":["Reduce speed before the bends and stay in your lane","Brake hard in each bend","Use the whole road width","Coast in neutral"],"a":0,"e":"Braking should be finished before you turn in. Braking mid-bend unsettles the car and can cause a skid."},
+{"c":"handling","q":"When driving in heavy rain, why should you keep a much larger gap?","o":["Stopping distances are roughly doubled and spray reduces visibility","Rain makes your engine slower","Your brakes work better","Other drivers go faster"],"a":0,"e":"Four seconds minimum. Spray from lorries can also blind you momentarily at exactly the wrong time."},
+{"c":"handling","q":"What's the danger of driving with your foot resting on the clutch pedal?","o":["It wears the clutch and reduces control","It saves fuel","It improves braking","It has no effect"],"a":0,"e":"Riding the clutch slips and overheats it. Keep your foot off the pedal unless you're using it."},
+{"c":"handling","q":"You're on a single-track road and meet an oncoming car. What should you do?","o":["Pull into or opposite the nearest passing place","Reverse the full length of the road","Drive onto the verge at speed","Wait for them to reverse"],"a":0,"e":"If the passing place is on your right, wait opposite it. Don't park in passing places."},
+{"c":"handling","q":"What should you do if your vehicle's brakes fade on a long descent?","o":["Select a lower gear and use engine braking","Pump the accelerator","Turn off the engine","Coast in neutral"],"a":0,"e":"Fade comes from continuous braking. Prevent it by choosing the right gear before the hill, not halfway down."},
+{"c":"handling","q":"When are road surfaces most slippery after a dry spell?","o":["During the first rainfall after dry weather","After a week of rain","In cold dry weather","On a frosty morning only"],"a":0,"e":"Rubber, dust and oil sit on the surface and the first rain lifts it into a greasy film."},
+{"c":"handling","q":"Why should you avoid harsh acceleration and heavy braking?","o":["It increases fuel use, wear and the chance of losing control","It makes the car quieter","It improves tyre grip","It reduces emissions"],"a":0,"e":"Smooth driving is safer, cheaper and easier on everyone in the car."},
+{"c":"handling","q":"You're driving in falling snow. What should you do?","o":["Reduce speed, keep well back and use dipped headlights","Use full beam for a better view","Keep close to the car in front","Drive in the highest gear possible"],"a":0,"e":"Stopping distances can be ten times longer. Clear all snow off the roof, lights and windows before setting off."},
+{"c":"handling","q":"What should you do when you want to park at night on a road with a speed limit above 30mph?","o":["Leave your sidelights on and park facing the traffic flow","Park facing oncoming traffic with lights off","Use hazard lights all night","Park on the pavement"],"a":0,"e":"Above 30mph you must leave parking lights on. Park in the direction of the traffic flow so your reflectors face traffic."},
+{"c":"motorway","q":"What's the national speed limit for a car on a motorway?","o":["70mph","60mph","80mph","There isn't one"],"a":0,"e":"70mph for cars and motorcycles. A car towing a trailer or caravan is limited to 60mph on a motorway."},
+{"c":"motorway","q":"Which vehicles are not allowed on a motorway?","o":["Motorcycles under 50cc, cyclists and pedestrians","Vans","Cars towing caravans","Coaches"],"a":0,"e":"Also banned: horse riders, agricultural vehicles and most learner drivers, except those with an approved instructor in a dual-control car."},
+{"c":"motorway","q":"You're joining a motorway from a slip road. What should you do?","o":["Adjust your speed to match traffic and merge into a gap","Stop at the end of the slip road","Force your way into lane one","Cross straight to the middle lane"],"a":0,"e":"Give priority to traffic already on the motorway. Use the slip road to build speed so you merge smoothly."},
+{"c":"motorway","q":"What does a red X over a motorway lane mean?","o":["The lane is closed — move out of it","Slow down and stay in the lane","Maximum speed 50mph","The lane is for emergency vehicles only"],"a":0,"e":"Driving in a lane under a red X is an offence and can be dangerous — there may be a broken-down vehicle or crew ahead."},
+{"c":"motorway","q":"When may you use the right-hand lane of a three-lane motorway?","o":["For overtaking, then return to the left when safe","For steady cruising","When traffic is heavy","Whenever you like"],"a":0,"e":"All lanes other than the left are overtaking lanes. Lane hogging causes congestion and is an offence."},
+{"c":"motorway","q":"You break down on a motorway with a hard shoulder. What should you do?","o":["Pull onto the hard shoulder, exit by the left doors and wait behind the barrier","Stay in the car with hazards on","Stand in front of the vehicle","Attempt repairs on the hard shoulder"],"a":0,"e":"Get well away from the carriageway. Emergency phones connect straight to the control room and pinpoint your location."},
+{"c":"motorway","q":"What do the marker posts along the edge of a motorway show?","o":["The direction and distance to the nearest emergency phone","The distance to the next junction","The speed limit","The lane number"],"a":0,"e":"An arrow points you to the nearest phone, usually about a mile apart."},
+{"c":"motorway","q":"What are the emergency areas on a smart motorway for?","o":["Stopping in an emergency where there's no hard shoulder","Taking a rest break","Overtaking slow traffic","Parking to check directions"],"a":0,"e":"They're marked with orange surfacing and a blue sign with an SOS phone. Use the phone and stay behind the barrier."},
+{"c":"motorway","q":"What should you do if you miss your exit on a motorway?","o":["Carry on to the next exit","Reverse along the hard shoulder","Cross the central reservation","Stop and turn around"],"a":0,"e":"Reversing or turning on a motorway is extremely dangerous and illegal. Go to the next junction and come back."},
+{"c":"motorway","q":"What does a flashing amber signal with a 50 on a motorway gantry mean?","o":["There's a hazard ahead — reduce speed to 50mph","The road is closed","Maximum speed 50 permanently","Take the next exit"],"a":0,"e":"Temporary signals warn of a hazard ahead. The limit applies until you pass a signal cancelling it."},
+{"c":"motorway","q":"You're on a motorway in fog with visibility below 100 metres. What lights should you use?","o":["Dipped headlights and fog lights if fitted","Full beam only","Sidelights only","Hazard lights continuously"],"a":0,"e":"Turn the fog lights off when visibility improves — they dazzle and mask your brake lights."},
+{"c":"motorway","q":"When can you use the hard shoulder as a running lane?","o":["Only when signs and overhead signals show it's open","Whenever traffic is queuing","When the vehicle in front starts using it","Between the hours shown on the entry sign"],"a":0,"e":"On some smart motorways the hard shoulder opens as a lane with a speed limit shown above it. Without that signal, it's for emergencies only."},
+{"c":"motorway","q":"What should you do as you leave a motorway?","o":["Check your speed — you'll be going faster than it feels","Brake hard on the carriageway","Stop at the end of the slip road","Keep the same speed on the slip road"],"a":0,"e":"Speed blindness is real after a long motorway run. Watch the speedometer, not your instincts, and expect tighter bends."},
+{"c":"motorway","q":"Why are countdown markers used before a motorway exit?","o":["They show 300, 200 and 100 yards to the exit","They show the speed limit","They mark emergency phones","They count the lanes"],"a":0,"e":"Three bars, two bars, one bar. Get into the left lane in good time rather than cutting across at the last moment."},
+{"c":"motorway","q":"What's the speed limit for a car towing a caravan on a motorway?","o":["60mph","70mph","50mph","No limit"],"a":0,"e":"Towing limits are 50mph on single carriageways and 60mph on dual carriageways and motorways. You also can't use the right-hand lane of a three-lane motorway."},
+{"c":"motorway","q":"Someone has broken down and is standing on the hard shoulder. What should you do?","o":["Move into the next lane if it's safe, or slow down","Stop on the hard shoulder to offer help","Continue at the same speed in the left lane","Switch on your hazard lights and hold your position"],"a":0,"e":"Give them space. Stopping to help puts you and them at greater risk — call 999 if they appear to be in danger."},
+{"c":"rules","q":"What's the national speed limit for cars on a single carriageway road?","o":["60mph","70mph","50mph","40mph"],"a":0,"e":"60mph single carriageway, 70mph dual carriageway and motorway. The limit is a maximum, not a target."},
+{"c":"rules","q":"You're in a built-up area with street lighting but no speed limit signs. What's the limit?","o":["30mph","20mph","40mph","60mph"],"a":0,"e":"Regular street lights usually mean 30mph unless signs say otherwise. Repeater signs are used where the limit differs."},
+{"c":"rules","q":"When can you park on the right-hand side of a road at night?","o":["In a one-way street","On any road with a limit of 30mph or less","Wherever there are no kerb markings","Anywhere, provided your sidelights are left on"],"a":0,"e":"Otherwise park on the left so your reflectors face oncoming traffic."},
+{"c":"rules","q":"What does a single broken white line along the centre of the road mean?","o":["It's a hazard warning line if the marks are longer than the gaps","Overtaking is banned","It marks a cycle lane","It's the edge of the carriageway"],"a":0,"e":"Longer marks with shorter gaps warn of a hazard ahead — don't cross unless you can see the road is clear."},
+{"c":"rules","q":"You're approaching a junction with double white lines where the line nearest you is solid. What does this mean?","o":["You must not cross or straddle it except in specific circumstances","You may overtake freely","You must stop","Parking is allowed"],"a":0,"e":"You may cross to enter premises or a side road, pass a stationary vehicle, or overtake a cyclist, horse or road maintenance vehicle travelling under 10mph."},
+{"c":"rules","q":"What must you do at a junction with a STOP sign and solid white line?","o":["Stop completely, even if the road looks clear","Slow down and look","Give way only to the right","Stop only in daylight"],"a":0,"e":"It's used where visibility is poor. You must come to a complete stop behind the line every time."},
+{"c":"rules","q":"Where must you not park?","o":["Opposite or within 10 metres of a junction","In a marked bay","On a driveway with permission","In a residential street"],"a":0,"e":"Also avoid: school entrance markings, bus stops, level crossings, and anywhere you'd block an entrance or dropped kerb."},
+{"c":"rules","q":"What does a green traffic light mean?","o":["Go if the way ahead is clear","Go regardless","Prepare to stop","Give way to traffic on the right"],"a":0,"e":"Green is permission, not an instruction. Don't enter the junction if you can't clear it."},
+{"c":"rules","q":"Amber shows at traffic lights. What should you do?","o":["Stop, unless you've crossed the line or stopping would be unsafe","Stop only if the junction ahead is clear","Continue if you're within 20 metres of the line","Give way to traffic already in the junction"],"a":0,"e":"Amber means stop. Only continue if you're so close that stopping suddenly could cause a collision."},
+{"c":"rules","q":"You want to turn right at a crossroads and an oncoming car also wants to turn right. What's usually safest?","o":["Turn offside to offside so you can both see past each other","Always turn nearside to nearside","Stop in the middle and wait","Turn behind them without looking"],"a":0,"e":"Offside to offside keeps your view of oncoming traffic clear. Road markings or a police officer may direct otherwise."},
+{"c":"rules","q":"Who has priority at a roundabout in the UK?","o":["Traffic coming from your immediate right, unless signs say otherwise","Traffic from the left","The largest vehicle","Whoever arrives first"],"a":0,"e":"Give way to the right as you approach, but keep moving if the way is clear — and watch for cyclists staying in the left lane."},
+{"c":"rules","q":"You're turning left from a main road into a side road. What should you check for first?","o":["Cyclists and motorcyclists on your left","Traffic behind only","Oncoming traffic only","Nothing — you have priority"],"a":0,"e":"Mirror, signal, and a blind-spot check before you turn. Bikes filter up the inside very quickly."},
+{"c":"rules","q":"What does a solid white line along the left-hand edge of the carriageway mean?","o":["It marks the edge of the carriageway","No parking","A cycle lane","The road narrows"],"a":0,"e":"Useful in poor visibility. A raised or rumble version warns you when you drift off the lane."},
+{"c":"rules","q":"When may you drive in a cycle lane marked by a solid white line?","o":["Not during its hours of operation","Any time","Only in the rain","When overtaking"],"a":0,"e":"A broken line means you may enter if unavoidable; a solid line during operating hours means keep out."},
+{"c":"rules","q":"You're on a road with a bus lane in operation. When may you use it?","o":["Only if the sign shows your vehicle may use it at that time","Whenever there's no bus in sight","At any time, provided you're overtaking","Only between 6pm and 7am"],"a":0,"e":"Signs list permitted users and hours — often taxis and cycles are allowed. Check before you commit."},
+{"c":"rules","q":"What must you do if a police officer signals you to stop?","o":["Pull over as soon as it's safe and switch off the engine","Slow down and continue","Stop in the middle of the road","Drive to the nearest police station"],"a":0,"e":"Failing to stop when directed is an offence. Pull in safely and stay in the vehicle unless asked to get out."},
+{"c":"rules","q":"When are you allowed to overtake on the left?","o":["When the vehicle ahead is signalling to turn right","When you're driving on a dual carriageway","When the driver ahead is below the speed limit","When there's a cycle lane on your left"],"a":0,"e":"Also permitted in slow-moving queues where your lane is flowing faster, and in one-way streets where lanes are marked."},
+{"c":"rules","q":"What must you do before reversing?","o":["Check all around and make sure it's clear, especially for children","Check your mirrors and rear window only","Signal your intention for at least five seconds","Reverse quickly to reduce the time you're exposed"],"a":0,"e":"Get someone to guide you if you can't see. Children are small enough to disappear completely behind a car."},
+{"c":"docs","q":"How long is a theory test pass certificate valid for?","o":["Two years","One year","Three years","Five years"],"a":0,"e":"If you don't pass your practical test within two years, you have to sit the theory again — worth booking the practical early."},
+{"c":"docs","q":"What's the minimum insurance cover you must have to drive on a public road?","o":["Third party","Third party, fire and theft","Fully comprehensive","None if the car is parked"],"a":0,"e":"Third party covers injury or damage you cause to others, but nothing to your own vehicle."},
+{"c":"docs","q":"You're stopped by police and don't have your documents with you. What happens?","o":["You may be asked to produce them at a police station within seven days","You must produce them within 24 hours","Your vehicle will be seized at the roadside","You'll be fined on the spot with no further action"],"a":0,"e":"Take your licence, insurance certificate and MOT to a police station of your choice within the time given."},
+{"c":"docs","q":"When must you tell the DVLA about a change?","o":["When you change your name or address, or develop a notifiable medical condition","Only when you sell the car","Every five years","Only if you move abroad"],"a":0,"e":"Failing to update your details can mean a fine, and out-of-date records can invalidate insurance claims."},
+{"c":"docs","q":"What is the V5C document commonly called?","o":["The vehicle registration certificate, or logbook","The MOT certificate","The insurance certificate","The driving licence"],"a":0,"e":"It records the registered keeper — which isn't necessarily the legal owner. Update it when you buy or sell."},
+{"c":"docs","q":"Under the New Drivers Act, what happens if you get six or more penalty points within two years of passing your test?","o":["Your licence is revoked and you return to provisional","You get a warning letter","You pay a fixed fine only","Nothing changes"],"a":0,"e":"You'd have to reapply for a provisional and pass both theory and practical tests again. Two mobile phone offences would do it."},
+{"c":"docs","q":"What must you have before you can tax a vehicle?","o":["Valid insurance and, if applicable, a valid MOT","A full service history","A parking permit","Breakdown cover"],"a":0,"e":"The systems are linked, so the tax application is checked against the insurance and MOT databases automatically."},
+{"c":"docs","q":"Your car is kept off the road and untaxed. What must you do?","o":["Make a SORN declaration to the DVLA","Keep it insured but let the tax lapse","Tell your insurer and nobody else","Return the V5C to the DVLA"],"a":0,"e":"A Statutory Off Road Notification tells the DVLA the vehicle isn't in use. Without tax or a SORN you can be fined automatically."},
+{"c":"docs","q":"What does an insurance 'excess' mean?","o":["The amount you pay towards a claim yourself","A refund at the end of the year","The maximum the insurer will pay","A penalty for speeding"],"a":0,"e":"A higher voluntary excess lowers your premium but costs you more if you actually claim."},
+{"c":"docs","q":"As a provisional licence holder in a car, what must you do?","o":["Display L plates and be supervised by someone over 21 who has held a full licence for three years","Drive only at night","Drive only with another learner","Carry your theory certificate"],"a":0,"e":"You also can't drive on the motorway unless you're with an approved driving instructor in a dual-control car."},
+{"c":"docs","q":"What's the eyesight standard for driving?","o":["Read a modern number plate from 20 metres","Read a number plate from 50 metres","Perfect vision without glasses","No standard applies"],"a":0,"e":"Glasses or contact lenses are fine, but you must wear them every time you drive if you need them for that standard."},
+{"c":"docs","q":"How many questions are in the UK car theory test, and how many must you get right?","o":["50 questions, 43 to pass","40 questions, 35 to pass","60 questions, 50 to pass","50 questions, 35 to pass"],"a":0,"e":"You get 57 minutes for the multiple choice, then the hazard perception section: 14 clips, 15 scoreable hazards, 44 out of 75 to pass."},
+{"c":"incidents","q":"You're first at the scene of a crash. What's the first priority?","o":["Warn other traffic and make the scene safe","Move all casualties immediately","Take photographs","Move the vehicles off the road"],"a":0,"e":"Switch on hazard lights, turn off engines, stop anyone smoking, then call 999 and deal with casualties."},
+{"c":"incidents","q":"What does DR ABC stand for in first aid at an incident?","o":["Danger, Response, Airway, Breathing, Circulation","Drive, Report, Assist, Brake, Call","Danger, Rescue, Alert, Breathe, Care","Direct, Remove, Ask, Bandage, Cover"],"a":0,"e":"Check for danger, see if they respond, open the airway, check breathing, then deal with bleeding."},
+{"c":"incidents","q":"A motorcyclist is lying injured in the road. What should you do about their helmet?","o":["Leave it on unless it's essential to remove it","Remove it straight away","Remove it only if they ask","Cut it off"],"a":0,"e":"Removing a helmet can cause serious spinal injury. Leave it unless the airway can't be kept open any other way."},
+{"c":"incidents","q":"How should you treat a casualty who is bleeding heavily from a wound with nothing embedded in it?","o":["Apply firm pressure over the wound and raise the limb if possible","Wash it with water","Apply a tourniquet immediately","Leave it uncovered"],"a":0,"e":"Use a clean cloth and keep pressing. If something is embedded, press around it rather than on it."},
+{"c":"incidents","q":"How should you treat someone suffering from burns at the scene?","o":["Cool the burn with plenty of clean, cool water for at least 20 minutes","Apply cream and cover it","Burst any blisters","Remove clothing stuck to the burn"],"a":0,"e":"Don't remove anything stuck to the skin. Keep cooling while you wait for the ambulance."},
+{"c":"incidents","q":"An adult casualty isn't breathing. How should you give chest compressions?","o":["Press down 5 to 6cm at 100 to 120 compressions a minute","Press down 2cm slowly","Only if you're trained as a paramedic","Press on the stomach"],"a":0,"e":"Centre of the chest, hard and fast, and keep going until help arrives or they start breathing."},
+{"c":"incidents","q":"You arrive at a crash where someone has a suspected spinal injury and there's no immediate danger. What should you do?","o":["Leave them where they are and keep them still","Move them to the verge","Sit them upright","Give them water"],"a":0,"e":"Moving them can turn a survivable injury into paralysis. Keep them warm, talk to them, wait for the professionals."},
+{"c":"incidents","q":"Your car catches fire in a tunnel and you can't put it out. What should you do?","o":["Leave the vehicle and get to an emergency exit","Stay in the car","Drive on with the fire burning","Open the bonnet to look"],"a":0,"e":"Don't open the bonnet — extra air feeds the fire. Alert the control room and move away from the smoke."},
+{"c":"incidents","q":"You're involved in a collision and damage is caused to another person's property. What must you do?","o":["Stop and give your details; report to police within 24 hours if you can't","Drive on if the damage is small","Leave a note only if it's expensive","Wait for the police to find you"],"a":0,"e":"Failing to stop and report is a serious offence. Exchange names, addresses, vehicle details and insurance information."},
+{"c":"incidents","q":"What should you do if you see a vehicle displaying a plain orange rectangle on the back?","o":["It's carrying hazardous goods — keep clear and report the exact markings if there's an incident","It's a slow vehicle","It's a driving school car","It's carrying livestock"],"a":0,"e":"Hazard plates tell the emergency services what they're dealing with. Never approach a spillage yourself."},
+{"c":"incidents","q":"A casualty is in shock after a collision. What should you do?","o":["Keep them warm, calm and still, and don't give them anything to eat or drink","Give them a hot sweet tea","Get them walking around","Leave them alone"],"a":0,"e":"Reassure them constantly and keep checking their breathing until the ambulance arrives."},
+{"c":"incidents","q":"You break down at a level crossing and the alarm starts. What should you do?","o":["Get everyone out and clear of the crossing immediately, then phone the signal operator","Stay in the car and hope","Push the car forward alone","Wait for the train to pass"],"a":0,"e":"People first, always. Use the railway telephone by the crossing — the number and instructions are on the box."},
+{"c":"loading","q":"Who is responsible for making sure a vehicle isn't overloaded?","o":["The driver","The manufacturer","The owner of the load","The insurer"],"a":0,"e":"You're responsible for the load and its security every time you drive, even if someone else packed it."},
+{"c":"loading","q":"How does a heavy load in the boot affect your car?","o":["It changes the handling and increases stopping distance","It improves grip on all wheels equally","It makes the steering heavier only","It has no effect"],"a":0,"e":"You may also need to adjust headlight aim and tyre pressures — check the handbook for laden settings."},
+{"c":"loading","q":"What's the main danger of a roof rack load?","o":["It raises the centre of gravity and affects stability, especially in wind","It improves fuel economy","It makes the car quieter","It reduces braking distance"],"a":0,"e":"Distribute the weight evenly, secure it properly, and take the rack off when you're not using it to save fuel."},
+{"c":"loading","q":"You're towing a caravan and it starts to snake from side to side. What should you do?","o":["Ease off the accelerator gently and slow down gradually","Brake hard immediately","Accelerate to straighten it","Steer sharply the other way"],"a":0,"e":"Harsh braking or steering makes snaking worse. Let the speed fall away and the outfit will settle."},
+{"c":"loading","q":"What is a stabiliser used for when towing?","o":["To help keep a trailer steady in crosswinds and at speed","To increase towing speed limits","To replace the handbrake","To carry extra weight"],"a":0,"e":"It helps, but it doesn't cure bad weight distribution. Load heavy items low and over the axle."},
+{"c":"loading","q":"Where should the heaviest items be placed in a trailer?","o":["Low down and over or just ahead of the axle","At the very back","At the very front, high up","On one side"],"a":0,"e":"Correct nose weight keeps the outfit stable. Too much weight at the rear is what starts snaking."},
+{"c":"loading","q":"You're carrying a child under three in the car. What must they use?","o":["A correct child restraint for their weight and height","An adult seat belt","Nothing, if the journey is short","A booster cushion only"],"a":0,"e":"A rear-facing restraint must never be used in a front seat with an active airbag."},
+{"c":"loading","q":"How should you secure a load carried inside the vehicle?","o":["So it can't move or fly forward in a sudden stop","Loosely so it can settle","On the parcel shelf","Against the windscreen"],"a":0,"e":"An unsecured object becomes a projectile in a crash. Heavy items belong in the boot, tied down."},
+{"c":"loading","q":"What's the effect of a heavy load on your fuel consumption?","o":["It increases it","It decreases it","No effect","It only matters uphill"],"a":0,"e":"More weight and more drag both cost fuel. Empty roof boxes are the classic wasted expense."},
+{"c":"loading","q":"When towing, what must you make sure about the trailer's lights?","o":["They work and match the car's indicators and brake lights","They are brighter than the car's","They only need to work at night","They are optional on short trips"],"a":0,"e":"Check them before every journey, along with tyres, number plate and the security of the coupling."},
+{"c":"signs","s":"stop","q":"What does this sign mean?","o":["Stop and give way","Give way to traffic on the major road","No entry","End of restriction"],"a":0,"e":"The only octagonal sign on UK roads, so you can recognise it even if it's covered in snow. You must stop completely at the line."},
+{"c":"signs","s":"give_way","q":"What does this sign mean?","o":["Give way to traffic on the major road","Stop completely","No through road","Roundabout ahead"],"a":0,"e":"Slow down, be ready to stop, and only emerge when you can do so without making anyone else change speed or direction."},
+{"c":"signs","s":"national_speed","q":"What does this sign mean?","o":["National speed limit applies","End of all restrictions except speed","No vehicles","Derestricted parking"],"a":0,"e":"On a single carriageway that's 60mph for cars, on a dual carriageway or motorway 70mph. It doesn't mean 'go as fast as you like'."},
+{"c":"signs","s":"no_entry","q":"What does this sign mean?","o":["No entry for vehicular traffic","Give way","No stopping","One way street"],"a":0,"e":"Often marks the exit of a one-way street. Going past it means driving straight into oncoming traffic."},
+{"c":"signs","s":"no_overtaking","q":"What does this sign mean?","o":["No overtaking","Two-way traffic ahead","Overtaking lane ahead","End of dual carriageway"],"a":0,"e":"A red ring means the sign is an order telling you what you must not do. This one applies until an 'end of no overtaking' sign."},
+{"c":"signs","s":"min_speed","q":"What does this blue sign with '30' mean?","o":["Minimum speed 30mph","Maximum speed 30mph","Advisory speed 30mph","Speed camera zone"],"a":0,"e":"Blue circles give positive instructions. A minimum speed sign with a red diagonal through it marks the end of that requirement."},
+{"c":"signs","s":"ahead_only","q":"What does this sign mean?","o":["Ahead only","Overhead bridge","One way traffic","Keep left"],"a":0,"e":"Blue circle, white arrow: something you must do. You can't turn left or right here."},
+{"c":"signs","s":"no_motor","q":"What does this sign mean?","o":["No motor vehicles","No cars, but motorcycles allowed","Motorcycle parking","End of motorway"],"a":0,"e":"Common on pedestrianised streets and greenways. Bicycles are still allowed through."},
+{"c":"signs","s":"crossroads","q":"What does this warning sign mean?","o":["Crossroads ahead","Level crossing ahead","Hospital ahead","T-junction ahead"],"a":0,"e":"Triangles warn. The arms show the relative importance of the roads — a bigger cross means both roads matter."},
+{"c":"signs","s":"t_junction","q":"What does this warning sign mean?","o":["T-junction ahead","Crossroads ahead","No through road","Traffic merging"],"a":0,"e":"The road you're on ends at a junction with a road going left and right. Slow down and be ready to give way."},
+{"c":"signs","s":"roundabout","q":"What does this warning sign mean?","o":["Roundabout ahead","Mini-roundabout","Sharp bends ahead","Turn left ahead"],"a":0,"e":"Start slowing early and pick your lane based on the exit you want, using the direction signs on the approach."},
+{"c":"signs","s":"signals","q":"What does this warning sign mean?","o":["Traffic signals ahead","Level crossing","Traffic merges","Roadworks"],"a":0,"e":"Useful where the lights are hidden round a bend or over a hill — expect to stop."},
+{"c":"signs","s":"slippery","q":"What does this warning sign mean?","o":["Slippery road ahead","Loose chippings","Roadworks ahead","Steep hill"],"a":0,"e":"Reduce speed gently and avoid harsh braking or steering until you're past."},
+{"c":"signs","s":"ped_crossing","q":"What does this warning sign mean?","o":["Pedestrian crossing ahead","Pedestrian zone","School crossing patrol","No pedestrians"],"a":0,"e":"Be ready to slow or stop, and don't overtake as you approach a crossing."},
+{"c":"signs","s":"hill_down","q":"What does this warning sign mean?","o":["Steep hill downwards","Steep hill upwards","Uneven road","Road narrows"],"a":0,"e":"Select a lower gear before the descent so engine braking does the work instead of your brakes."},
+{"c":"signs","s":"humps","q":"What does this warning sign mean?","o":["Road hump ahead","Uneven surface","Bridge ahead","Loose chippings"],"a":0,"e":"Slow to the speed the humps are designed for — usually 20mph — rather than braking at each one."},
+{"c":"signs","s":"two_way","q":"What does this warning sign mean?","o":["Two-way traffic ahead","Dual carriageway ahead","Overtaking permitted","End of one-way street"],"a":0,"e":"Often where a dual carriageway ends or a one-way system finishes. Don't stray over the centre line."},
+{"c":"signs","s":"narrows","q":"What does this warning sign mean?","o":["Road narrows on both sides","Road widens","Bridge ahead","Two-way traffic"],"a":0,"e":"Be ready to give way or slow down — there may not be room for two vehicles side by side."},
+{"c":"signs","s":"no_stopping","q":"What does this sign mean?","o":["No stopping — a clearway","No waiting","No parking on the verge","End of restriction"],"a":0,"e":"You must not stop at all, even to drop someone off, except in an emergency."},
+{"c":"signs","s":"no_waiting","q":"What does this sign mean?","o":["No waiting","No stopping at any time","Parking permitted","No entry"],"a":0,"e":"You may stop briefly to set down or pick up passengers, but you can't wait or park."},
+{"c":"signs","s":"one_way","q":"What does this sign mean?","o":["One-way street in the direction of the arrow","Traffic merges from the right","Keep right","Ahead only"],"a":0,"e":"Rectangular signs give information. Don't confuse this with the blue 'ahead only' circle, which is an order."},
+{"c":"signs","q":"What shape are signs that give an order you must obey?","o":["Circular","Triangular","Rectangular","Octagonal"],"a":0,"e":"Circles order, triangles warn, rectangles inform. A red ring means don't; a blue circle means do."},
+{"c":"signs","q":"What colour are motorway direction signs?","o":["Blue with white lettering","Green with white lettering","White with black lettering","Brown with white lettering"],"a":0,"e":"Green signs are primary routes, white with black borders are local roads, and brown signs point to tourist attractions."},
+{"c":"signs","q":"You see a temporary road sign with a yellow background. What does that mean?","o":["It's a temporary sign, often for roadworks or an event","It's advisory only","It applies to lorries only","It applies at night only"],"a":0,"e":"Yellow-backed signs still carry the same legal force as the permanent version when they show an order."},
+{"c":"signs","q":"What does a triangular sign with a red border warn of?","o":["A hazard ahead","An order you must obey","Information about a route","The end of a restriction"],"a":0,"e":"The picture inside tells you what the hazard is, and any plate underneath adds distance or detail."},
+{"c":"signs","q":"What does a white sign with a red border and a number inside a circle mean?","o":["A maximum speed limit you must not exceed","A recommended speed","A minimum speed","A distance in miles"],"a":0,"e":"It applies until you see a different limit sign. Repeater signs along the road confirm it."},
+{"c":"signs","q":"What does a zig-zag line on the approach to a pedestrian crossing mean?","o":["No parking or overtaking within the zig-zag area","Give way to traffic from the right","Cyclists only","The road narrows"],"a":0,"e":"The zig-zags keep the crossing visible. Parking or overtaking there hides pedestrians from other drivers."},
+{"c":"signs","q":"What does a blue circle with a white bicycle mean?","o":["A route for cycles only","No cycling","Cycles may be present","Cycle parking"],"a":0,"e":"Blue circle means mandatory. If it's a red-ringed bicycle, cycling is prohibited."},
+{"c":"signs","q":"What does an arm signal — right arm extended and moving up and down — from a driver mean?","o":["I intend to slow down or stop","I intend to turn right","I intend to move off","I am letting you pass"],"a":0,"e":"Arm signals matter where indicators might be missed, such as at a crossing or when a bulb has failed."},
+{"c":"signs","q":"What does a red flashing light signal at a level crossing mean?","o":["Stop — a train is approaching","Proceed slowly","The barrier is broken","Give way to pedestrians"],"a":0,"e":"If the lights keep flashing after a train has gone, another one is coming. Stay put until they stop."},
+{"c":"signs","q":"You see a sign with a brown background. What does it point to?","o":["A tourist attraction","A motorway service area","A diversion route","A weight restriction"],"a":0,"e":"Brown means leisure and tourism. Blue means motorway, green means primary route, white means local road."},
+{"c":"signs","q":"What does a lane marking of double yellow lines at the kerb mean?","o":["No waiting at any time","No stopping at any time","Loading only","Parking for permit holders"],"a":0,"e":"Double yellows ban waiting, but you can usually load or unload unless there are kerb blips showing loading restrictions."},
+{"c":"alertness","q":"You're driving and a wasp flies into the car. What should you do?","o":["Stop in a safe place and deal with it","Swat at it while driving","Open the window and keep driving fast","Brake hard to distract it"],"a":0,"e":"Any distraction inside the car is a hazard. Pull over somewhere safe and legal before dealing with it."},
+{"c":"alertness","q":"When is it safe to eat or drink at the wheel?","o":["It isn't — stop somewhere safe if you need to","At traffic lights","On a straight, empty road","In slow-moving traffic"],"a":0,"e":"You need both hands and full attention. Spilling a hot drink in your lap at 40mph is how people lose control."},
+{"c":"alertness","q":"You're driving a long distance. How often should you take a break?","o":["At least every two hours","Every five hours","Only when you feel exhausted","Only if you're over 70"],"a":0,"e":"A break of at least 15 minutes every two hours is the advice. Tiredness builds long before you notice it."},
+{"c":"alertness","q":"Before changing lanes on a dual carriageway, what should you do?","o":["Mirrors, signal, then a blind-spot check before moving","Signal, move over, then check your mirrors","Check your mirrors and move if it looks clear","Move over gradually so other drivers notice"],"a":0,"e":"A vehicle can sit in your blind spot for miles. The shoulder check is what catches it."},
+{"c":"alertness","q":"Why should you take extra care when driving somewhere completely new to you?","o":["You'll be navigating as well as driving, which splits your attention","The roads are more dangerous","Speed limits are different","Your insurance may not cover it"],"a":0,"e":"Plan the route beforehand, and if you're unsure, pull over somewhere safe to check rather than reading signs at the last second."},
+{"c":"alertness","q":"You've just been overtaken and the car has pulled in close in front. What should you do?","o":["Ease off to restore your safety gap","Brake firmly to open a gap quickly","Stay close so nobody else can pull in","Move out and overtake them back"],"a":0,"e":"Ease off gently and rebuild the gap. Retaliating turns one bad bit of driving into two."},
+{"c":"attitude","q":"Another driver has made a mistake that annoyed you. What's the safest response?","o":["Let it go and concentrate on your own driving","Stay close behind to show your disapproval","Pull alongside to make eye contact","Overtake and slow down in front of them"],"a":0,"e":"Anger costs you attention and judgement. Nothing you do to them makes the road safer."},
+{"c":"attitude","q":"You're driving a slow vehicle on a narrow road with a long queue behind. What should you do?","o":["Pull over where it's safe and let them pass","Keep going and let them overtake when they can","Wave them past when the road looks clear","Speed up until the queue clears"],"a":0,"e":"The Highway Code asks slower drivers to pull in where possible. A frustrated queue is a queue full of risky overtakes."},
+{"c":"attitude","q":"When should you use your indicators?","o":["In good time, whenever they'd help other road users","Only when turning right","Only if traffic is behind you","After you start the manoeuvre"],"a":0,"e":"Signal early enough to be useful but not so early it misleads. And cancel it afterwards."},
+{"c":"attitude","q":"You're waiting to turn right and traffic is building up behind you. What should you do?","o":["Wait for a safe gap, however long it takes","Take the next small gap","Pull out and make them stop","Reverse and go another way"],"a":0,"e":"Pressure from behind is not a reason to accept an unsafe gap. It's your licence and your responsibility."},
+{"c":"attitude","q":"Why shouldn't you drive with your front fog lights on in clear weather?","o":["They dazzle other drivers unnecessarily","They use too much fuel","They're illegal on all roads","They damage the bulbs"],"a":0,"e":"Same as rear fogs — they exist for seriously reduced visibility and should be switched off as soon as it clears."},
+{"c":"attitude","q":"A cyclist has pulled into the middle of the lane ahead of you at a narrow pinch point. What should you do?","o":["Hold back until the road is wide enough to pass safely","Pass them within the lane, keeping well left","Move up close so they know you want past","Expect them to move over once you signal"],"a":0,"e":"Riders take the centre of the lane where there isn't room to be passed safely. Wait for the road to open up."},
+{"c":"vehicle","q":"What does a red warning light on the dashboard usually mean?","o":["Something serious — stop as soon as it's safe and investigate","It's advisory only","It relates to the radio","It will clear itself"],"a":0,"e":"Red means stop and check; amber generally means get it looked at soon. Check the handbook for the specific symbol."},
+{"c":"vehicle","q":"How can you tell if your shock absorbers are worn?","o":["The car continues to bounce after you press down on a corner","The steering wheel is stiff","The engine is noisy","The brakes squeal"],"a":0,"e":"Worn dampers let the wheels lose contact with the road, which affects braking, cornering and grip."},
+{"c":"vehicle","q":"Why should you check your mirrors and seat position before starting a journey?","o":["So you can see clearly and reach the controls comfortably","To save fuel","To reduce tyre wear","To satisfy the MOT"],"a":0,"e":"Adjust the seat first, then the mirrors to match. Never do either while the car is moving."},
+{"c":"vehicle","q":"What's the effect of under-inflated tyres?","o":["Poorer handling, longer stopping distances and more fuel used","Better grip in the wet","Shorter stopping distances","No effect below 40mph"],"a":0,"e":"They also wear out faster on the shoulders and are more likely to overheat and blow out at speed."},
+{"c":"vehicle","q":"When should you switch off your engine while waiting?","o":["If you're likely to be stationary for more than a couple of minutes","Only when parked on private land","Every time you stop at traffic lights","Only once the engine is fully warmed up"],"a":0,"e":"Idling wastes fuel and pollutes, and leaving an engine running unnecessarily on a public road is an offence."},
+{"c":"vehicle","q":"What's the most likely cause of the brakes pulling to one side?","o":["A fault in the braking system that needs checking","Worn wiper blades","Low screen wash","A dirty windscreen"],"a":0,"e":"Uneven braking is dangerous under hard stops. Get it diagnosed rather than driving around it."},
+{"c":"vehicle","q":"Where is the safest place for a rear-facing baby seat?","o":["In the back, or in the front only if the airbag is deactivated","Front seat with the airbag active","On the parcel shelf","On a passenger's lap"],"a":0,"e":"A deploying airbag can be fatal to a rear-facing infant. If you must use the front, the airbag has to be switched off."},
+{"c":"vehicle","q":"What's the purpose of the vehicle's crumple zones?","o":["To absorb impact energy and protect the occupants","To make the car lighter","To improve fuel economy","To reduce wind noise"],"a":0,"e":"They're designed to deform. Damage that looks dramatic may be the car doing exactly its job."},
+{"c":"margins","q":"What's the overall stopping distance at 50mph in good conditions?","o":["53 metres (about 175 feet)","36 metres (about 118 feet)","73 metres (about 240 feet)","23 metres (about 75 feet)"],"a":0,"e":"15m thinking plus 38m braking. Notice how it grows far faster than the speed does."},
+{"c":"margins","q":"What's the overall stopping distance at 40mph in good conditions?","o":["36 metres (about 118 feet)","23 metres (about 75 feet)","53 metres (about 175 feet)","12 metres (about 40 feet)"],"a":0,"e":"12m thinking plus 24m braking. Going from 30 to 40mph adds over half again to your total."},
+{"c":"margins","q":"Which part of the stopping distance is affected by tiredness or distraction?","o":["The thinking distance","The braking distance","Neither","Both equally"],"a":0,"e":"Reaction time stretches, so you travel further before the brakes even come on. Tyres and road surface affect the braking part."},
+{"c":"margins","q":"How much can stopping distances increase on an icy road?","o":["Up to ten times the normal distance","Twice the normal distance","They stay the same","Half the normal distance"],"a":0,"e":"On ice you need an enormous gap and feather-light inputs. Even then, stopping may simply not be possible."},
+{"c":"margins","q":"You're overtaking on a country road and the vehicle ahead speeds up. What should you do?","o":["Drop back and abandon the overtake","Keep accelerating to complete the move","Hold position alongside until they slow","Move back in front of them quickly"],"a":0,"e":"Never commit to an overtake you can't finish. Back off and wait for a better opportunity."},
+{"c":"margins","q":"Why should you leave extra space when following a large vehicle in the rain?","o":["Spray from its wheels badly reduces your visibility","It brakes much harder","It accelerates faster","It has no brake lights"],"a":0,"e":"You also need the extra distance to see round it. If you can't see the road ahead, you can't plan."},
+{"c":"margins","q":"Where are you most likely to find black ice?","o":["On shaded roads, bridges and exposed high ground","In town centres","In tunnels","On motorway slip roads only"],"a":0,"e":"Bridges freeze first because cold air passes underneath. A road that looks merely wet in freezing temperatures may not be."},
+{"c":"margins","q":"What should you do if your tyre blows out at speed?","o":["Hold the steering firmly, ease off the accelerator and slow gradually","Brake hard immediately","Steer sharply to the verge","Pull the handbrake"],"a":0,"e":"Let the car slow itself, keep it straight, and pull off the road well clear of traffic when you can."},
+{"c":"hazard","q":"You see a cyclist ahead glance over their right shoulder. What might this mean?","o":["They may be about to move out or turn right","They're checking the road surface behind them","They want you to overtake","They're about to stop at the kerb"],"a":0,"e":"A shoulder check is usually the first sign of a manoeuvre. Hang back and give them room."},
+{"c":"hazard","q":"What should you do when approaching a humpback bridge?","o":["Slow down and be ready for oncoming traffic you can't see","Keep to the centre of the road and hold your speed","Accelerate so you're over it quickly","Move to the crown of the bridge before looking"],"a":0,"e":"You have no view of the far side, and the road may be single track over the bridge itself."},
+{"c":"hazard","q":"You're driving at night and an oncoming car's headlights dazzle you. What should you do?","o":["Slow down and look towards the left edge of the road","Look directly at the lights so your eyes adjust","Flash your own headlights back at them","Switch to full beam until they've passed"],"a":0,"e":"Use the nearside line or kerb as your guide until your eyes recover. Don't stare into the lights."},
+{"c":"hazard","q":"What does the presence of a 'horses' warning sign mean for your driving?","o":["Slow right down and pass wide and quietly if you meet any","Sound your horn so riders know you're there","Expect riders to pull onto the verge for you","Continue as normal — the rider will control the horse"],"a":0,"e":"A startled horse can go anywhere, including into your path or the path of oncoming traffic."},
+{"c":"hazard","q":"A car ahead has its right indicator on and is slowing near a row of houses. What should you anticipate?","o":["It may stop and turn across your path","It will pull over to the left","It is about to overtake","It has a faulty indicator"],"a":0,"e":"Ease off and hold back. Don't try to squeeze past a vehicle that's signalling to turn right."},
+{"c":"hazard","q":"Why are junctions on a hill particularly hazardous?","o":["Your view may be restricted and vehicles can roll back","Gears wear faster","Brakes fail on hills","Signals don't work uphill"],"a":0,"e":"Leave extra room behind a car doing a hill start, and creep forward carefully if a crest hides your view."},
+{"c":"hazard","q":"You feel unwell but you're already driving. What should you do?","o":["Stop somewhere safe as soon as you can","Continue slowly to your destination","Open a window and carry on","Pull onto the hard shoulder and rest"],"a":0,"e":"Feeling faint, dizzy or in pain will slow your reactions. Get off the road before it becomes an emergency."},
+{"c":"hazard","q":"What should you expect where the road is marked with a sign warning of queues ahead?","o":["Traffic may be stopped just out of sight","The road is closed","There are roadworks only","The speed limit has ended"],"a":0,"e":"Slow early and consider a brief flash of hazard lights to warn the driver behind you."},
+{"c":"vulnerable","q":"What should you do before opening your car door after parking on the road?","o":["Check mirrors and over your shoulder for cyclists and traffic","Open it quickly","Rely on your mirrors alone","Open it and listen"],"a":0,"e":"The 'Dutch reach' — opening with the hand furthest from the door — turns your body and forces the check naturally."},
+{"c":"vulnerable","q":"At a crossroads, who should you give priority to when turning?","o":["Pedestrians already crossing the road you're turning into","Nobody — you have priority","Only cars","Only cyclists"],"a":0,"e":"Pedestrians crossing or waiting to cross at a junction have priority under the Highway Code hierarchy."},
+{"c":"vulnerable","q":"A vehicle displaying a disabled badge is parked awkwardly ahead. What should you do?","o":["Be patient — the driver may need more time and space","Pass close so you don't block the road","Wait behind and give a short horn note","Expect them to move as soon as they see you"],"a":0,"e":"Getting in and out may take a while. Give them room and wait."},
+{"c":"vulnerable","q":"Why should you be especially careful near a parked ice cream van?","o":["Children may run across the road without looking","It blocks the drains","It has bright lights","It may reverse"],"a":0,"e":"Slow to a crawl. Children focused on the van will not be looking at your car."},
+{"c":"vulnerable","q":"You're approaching a pedestrian crossing and a bus is stopped in the lane beside you. What should you do?","o":["Slow down — someone may step out from in front of the bus","Pass the bus quickly while the crossing is clear","Hold your speed but watch the bus's mirrors","Expect the bus to move off before you reach it"],"a":0,"e":"Your view is blocked, so treat the gap as if someone is about to walk out of it."},
+{"c":"vulnerable","q":"What should you do when following a motorcyclist over a poor road surface?","o":["Allow extra room — they may swerve or wobble","Move closer so they can see you in their mirror","Overtake before the surface gets worse","Expect them to hold a straight line"],"a":0,"e":"Potholes and loose gravel are minor to you and potentially lethal on two wheels."},
+{"c":"vulnerable","q":"A pedestrian with a guide dog is waiting at the kerb. What should you do?","o":["Stop and wait patiently for them to cross","Wave them across once the road is clear","Give a short horn note to signal it's safe","Drive slowly around them"],"a":0,"e":"They may not be able to see your gesture, and a horn is confusing rather than helpful. Just wait."},
+{"c":"vulnerable","q":"Where should you look for cyclists at a roundabout?","o":["In the left-hand lane, even if they're going all the way round","Only in the right lane","Only at the exit","On the pavement"],"a":0,"e":"Cyclists often stay left for safety. Never cut across one as you leave the roundabout."},
+{"c":"others","q":"You're approaching a school bus with hazard lights on. What should you do?","o":["Slow down and watch for children getting off","Pass quickly while the bus is stationary","Expect the bus to move off immediately","Treat it as an ordinary parked vehicle"],"a":0,"e":"Children crossing in front of or behind a bus is one of the most common school-run collisions."},
+{"c":"others","q":"Why do lorries take longer to stop than cars?","o":["They're much heavier, so they need a greater distance","Their brakes are weaker","Their tyres are harder","They travel faster"],"a":0,"e":"Never pull in sharply in front of one — you're stealing the space they need to stop."},
+{"c":"others","q":"What should you do if a lorry is overtaking you on a motorway?","o":["Ease off slightly to let it complete the move","Hold your speed so the manoeuvre finishes sooner","Move over into the right-hand lane","Brake firmly to open a gap"],"a":0,"e":"A lorry overtake takes a long time. Helping it finish clears the lane for everyone."},
+{"c":"others","q":"A vehicle ahead has a 'long vehicle' marking. What should you expect at a roundabout?","o":["It may straddle lanes or swing wide","It will stop","It will take the first exit","It will use the hard shoulder"],"a":0,"e":"Stay well back and don't move alongside it — the rear wheels cut a much tighter line than the cab."},
+{"c":"others","q":"What's the danger of driving close behind a bus in wet weather?","o":["Spray and a blocked view, plus sudden stops at bus stops","Its exhaust damages your paint","Its mirrors dazzle you","It has no brake lights"],"a":0,"e":"Give yourself the distance to see and to stop when it pulls in without much warning."},
+{"c":"others","q":"You're passing a line of stationary lorries at a ferry port or truck stop. What should you watch for?","o":["Drivers stepping out from between the vehicles","Loose cargo only","Bright lights","Reversing cars only"],"a":0,"e":"People appear from gaps with no warning. Crawl through and be ready to stop."},
+{"c":"others","q":"Why should you avoid driving in a lorry's blind spots?","o":["The driver simply can't see you there","It's illegal","It uses more fuel","Your mirrors get dirty"],"a":0,"e":"The worst areas are close behind, immediately in front, and down the nearside. Pass through them, don't sit in them."},
+{"c":"others","q":"What should you do when a tractor pulls into a passing place to let you by?","o":["Pass slowly and thank the driver","Accelerate hard past to clear the gap","Stop alongside to check it's safe","Wait for the tractor to move off first"],"a":0,"e":"Farm vehicles are wide and the verge may be soft. Pass at a sensible speed."},
+{"c":"handling","q":"What should you do when driving over a level crossing?","o":["Keep going steadily and never stop on the crossing","Change gear on the crossing","Stop to check for trains","Reverse if the barrier starts to fall"],"a":0,"e":"Only cross if the road beyond is clear, and don't stop, change gear or hesitate while you're on the rails."},
+{"c":"handling","q":"When are you allowed to overtake on the inside in a one-way street?","o":["When lanes are marked and traffic is moving in marked lanes","Whenever the right-hand lane is slower","Only if you're turning left at the end","Never — you must always pass on the right"],"a":0,"e":"In a one-way street you may pass on either side, but don't weave between lanes."},
+{"c":"handling","q":"You're driving on a road covered in loose chippings. What should you do?","o":["Reduce speed to avoid throwing stones and losing grip","Maintain speed","Drive in the middle of the road","Brake sharply"],"a":0,"e":"Flying chippings break windscreens and headlights, and grip is much reduced until the surface beds in."},
+{"c":"handling","q":"What's the correct way to use the handbrake when stopping in traffic?","o":["Apply it when you'll be stationary for more than a moment","Never use it in traffic","Use it instead of the footbrake","Use it while still moving"],"a":0,"e":"It stops you rolling and saves dazzling the driver behind with your brake lights in a long queue."},
+{"c":"handling","q":"Why should you use a low gear when driving in deep standing water?","o":["To keep engine revs up and avoid stalling","To go faster","To save fuel","To improve steering"],"a":0,"e":"Drive slowly with the clutch slipping slightly to keep revs high, and test your brakes once you're through."},
+{"c":"handling","q":"What should you do if you have to drive in strong crosswinds?","o":["Hold the steering firmly and expect gusts in exposed places","Increase your speed to reduce the buffeting","Drive close behind a lorry for shelter","Keep to the centre of the road"],"a":0,"e":"Be ready for a push as you pass a gap in a hedge, a bridge or a large vehicle, and give bikes extra room."},
+{"c":"handling","q":"When should you use the 'clutch down' technique to stop?","o":["Only just before the car comes to a halt","Throughout the whole braking phase","Whenever you brake","When going downhill"],"a":0,"e":"Declutching early means coasting, which costs you engine braking and control."},
+{"c":"handling","q":"What should you do when driving through a ford or flooded section?","o":["Check the depth first, cross slowly, then dry the brakes","Drive through quickly","Rev hard and hope","Reverse through it"],"a":0,"e":"Water deeper than the bottom of your door is likely to disable the car — and moving water can float it."},
+{"c":"motorway","q":"What should you do if you feel tired while driving on the motorway?","o":["Leave at the next services and take a proper break","Open the window","Turn the music up","Increase your speed"],"a":0,"e":"Motorway monotony makes tiredness worse. A short nap plus caffeine is far more effective than fresh air."},
+{"c":"motorway","q":"You're in the middle lane of a motorway and the left lane is clear ahead. What should you do?","o":["Move back to the left lane when it's safe","Stay where you are","Move to the right lane","Slow down"],"a":0,"e":"Always return to the left when you've finished overtaking. Middle lane hogging blocks the road and is an offence."},
+{"c":"motorway","q":"What should you do if you have to stop in an emergency area on a smart motorway?","o":["Exit by the left doors, get behind the barrier and use the SOS phone","Stay in the vehicle with hazards on","Stand behind the vehicle","Repair the car there"],"a":0,"e":"Tell the control room so they can close the lane before you try to rejoin the carriageway."},
+{"c":"motorway","q":"Which lane should you normally use when driving along a motorway?","o":["The left-hand lane","The middle lane","The right-hand lane","Any lane you prefer"],"a":0,"e":"The left lane is for normal driving. Everything to the right is for passing."},
+{"c":"motorway","q":"What do amber reflective studs on a motorway mark?","o":["The edge of the central reservation","The edge of the hard shoulder","A slip road exit","The lane centre"],"a":0,"e":"Red on the left edge, amber on the right, green at slip roads, white between lanes. Useful in fog and heavy rain."},
+{"c":"motorway","q":"What do green reflective studs on a motorway indicate?","o":["The edge of a slip road or lay-by","The central reservation","The hard shoulder","A closed lane"],"a":0,"e":"They mark where traffic joins or leaves, so expect merging vehicles around them."},
+{"c":"motorway","q":"You're on a motorway and traffic ahead has come to a sudden stop. What should you do?","o":["Brake in good time and briefly use hazard lights to warn drivers behind","Brake at the last moment","Change lanes immediately","Move onto the hard shoulder"],"a":0,"e":"Motorway pile-ups happen because the warning never reaches the back of the queue."},
+{"c":"motorway","q":"When can you stop on a motorway?","o":["In an emergency, a breakdown, or when signalled to do so","To use a phone","To check a map","To pick up a passenger"],"a":0,"e":"Stopping for anything else, including on the hard shoulder for a rest, is an offence."},
+{"c":"rules","q":"What must you do when approaching a mini-roundabout?","o":["Give way to traffic from the right and pass round the central marking","Drive straight over it","Give way to the left","Stop completely"],"a":0,"e":"All vehicles should pass round the central markings unless they're too large to do so."},
+{"c":"rules","q":"What does a flashing amber light at a school crossing mean?","o":["Slow down — children may be crossing","Stop and wait","The school is closed","The crossing is out of use"],"a":0,"e":"It operates at the start and end of the school day. Be ready to stop for the patrol."},
+{"c":"rules","q":"When is it legal to drive in a lane reserved for buses and cycles?","o":["Outside the hours shown on the sign, or if your vehicle is listed","At any time","Only on Sundays","Only when overtaking"],"a":0,"e":"Read the sign — hours and permitted vehicles vary between one street and the next."},
+{"c":"rules","q":"You're approaching a junction with the road marked 'Give Way' but no traffic is coming. What should you do?","o":["Slow down, look properly, and continue if it's genuinely clear","Stop completely behind the line every time","Keep your speed if the road looks clear","Emerge and expect others to slow for you"],"a":0,"e":"You don't have to stop, but you do have to be able to stop. Approach at a speed that lets you."},
+{"c":"rules","q":"Where must you not overtake?","o":["Approaching a bend, brow of a hill or pedestrian crossing","On a dual carriageway","In the right-hand lane","On a straight road"],"a":0,"e":"Also avoid overtaking near junctions, level crossings, or wherever you'd have to cross double white lines."},
+{"c":"rules","q":"What's the rule about stopping on a clearway?","o":["You must not stop at all, except in an emergency","You may stop for two minutes","You may stop to set down passengers","You may stop outside rush hour"],"a":0,"e":"Urban clearways allow brief stops to pick up or set down; a full clearway does not."},
+{"c":"rules","q":"At a crossroads with no signs or markings, who has priority?","o":["Nobody — approach with caution and be ready to give way","Traffic from the right","Traffic going straight on","The larger vehicle"],"a":0,"e":"Unmarked crossroads are exactly where assumptions cause collisions. Slow right down and make eye contact."},
+{"c":"rules","q":"You want to turn right into a side road. Where should you position the car?","o":["Just left of the centre line, as close to the middle as is safe","Close to the kerb","In the middle of the road","In the opposite lane"],"a":0,"e":"Correct positioning tells other drivers what you're doing and lets traffic pass on your left where there's room."},
+{"c":"docs","q":"What should you do if you're involved in a collision and someone is injured?","o":["Give your details, call 999 and report it to police within 24 hours if not done at the scene","Exchange details only","Drive away if nobody stops you","Wait a week then report"],"a":0,"e":"You must also produce your insurance certificate. Failing to stop or report is a serious criminal offence."},
+{"c":"docs","q":"What is 'no claims discount'?","o":["A reduction on your premium for claim-free years","A government grant","A refund on your MOT","A discount on fuel"],"a":0,"e":"It's built up over years and can often be protected for a fee, though it may still affect the price."},
+{"c":"docs","q":"Your insurance is 'third party only'. What does it cover?","o":["Injury or damage you cause to other people and their property","Damage to your own vehicle","Theft of your vehicle","Fire damage"],"a":0,"e":"Your own repairs come out of your pocket. Fire and theft cover adds those two risks; comprehensive adds your own damage."},
+{"c":"docs","q":"How old must you be to hold a full car driving licence in the UK?","o":["17, or 16 if you receive the enhanced mobility component of PIP","18","16 for everyone","21"],"a":0,"e":"You can apply for a provisional at 15 years and 9 months, but you can't drive on it until you're 17."},
+{"c":"docs","q":"When must a vehicle's registered keeper notify the DVLA?","o":["When they sell or transfer the vehicle","Only when the MOT expires","Every time the insurance is renewed","Only if the vehicle is scrapped"],"a":0,"e":"Until the DVLA is told, you stay liable for tax and any penalties the new driver picks up."},
+{"c":"docs","q":"What happens if you drive without valid insurance?","o":["A fixed penalty, points, and possible court action and seizure of the vehicle","A warning only","Nothing if you were unaware","A small fine only"],"a":0,"e":"Six to eight penalty points and an unlimited fine in court — and for a new driver that means losing your licence."},
+{"c":"docs","q":"How long must you keep the vehicle test (MOT) certificate valid?","o":["It must be valid at all times the vehicle is used on the road","Only at renewal time","Only for cars over ten years old","Only for taxed vehicles"],"a":0,"e":"Driving without one is an offence and can also invalidate your insurance."},
+{"c":"docs","q":"What does the hazard perception part of the theory test involve?","o":["14 clips with 15 scoreable hazards — you need 44 out of 75","20 clips with a pass mark of 30","A written essay","A practical drive"],"a":0,"e":"You must pass both parts in the same sitting. Clicking wildly to game it scores you zero for that clip."},
+{"c":"incidents","q":"What's the first thing you should do if you arrive at a crash where fuel has spilled?","o":["Keep everyone away and make sure nobody smokes","Wash it away with water","Cover it with a coat","Move the vehicles"],"a":0,"e":"Petrol vapour ignites easily. Switch off engines and keep bystanders well back."},
+{"c":"incidents","q":"When should you call 999 rather than dealing with an incident yourself?","o":["Whenever anyone is injured or the road is dangerously blocked","Only for motorway crashes","Only at night","Only if the police ask"],"a":0,"e":"Give the exact location, number of vehicles and casualties, and any hazard markings you can see."},
+{"c":"incidents","q":"A casualty is unconscious but breathing normally and has no suspected spinal injury. What should you do?","o":["Place them in the recovery position and monitor their breathing","Sit them up","Give them a drink","Leave them on their back"],"a":0,"e":"It keeps the airway clear if they vomit. Keep checking breathing until help arrives."},
+{"c":"incidents","q":"What should you do if your engine catches fire while driving?","o":["Stop, get everyone out and away, and call the fire service","Open the bonnet to check","Keep driving to a garage","Pour water on it"],"a":0,"e":"Opening the bonnet feeds the fire oxygen. Get clear and let the professionals deal with it."},
+{"c":"incidents","q":"Why should you switch off the engine of a crashed vehicle if you safely can?","o":["To reduce the risk of fire","To save fuel","To stop the radio","To help the battery"],"a":0,"e":"It cuts the ignition source and stops the fuel pump running."},
+{"c":"incidents","q":"What information should you exchange after a collision with another vehicle?","o":["Names, addresses, vehicle registrations and insurance details","Names only","Phone numbers only","Nothing if there's no damage"],"a":0,"e":"Photographs of the scene and positions are extremely useful later, and note any independent witnesses."},
+{"c":"incidents","q":"You're first on the scene and a casualty is having difficulty breathing. What should you do?","o":["Open the airway by gently tilting the head back and lifting the chin","Give them water","Sit them upright quickly","Leave them and wait"],"a":0,"e":"An obstructed airway kills far faster than most injuries. Airway first, then breathing, then bleeding."},
+{"c":"incidents","q":"What should you do if you see smoke or fire in a tunnel ahead?","o":["Switch on hazard lights, stop, and follow the tunnel's emergency instructions","Drive through the smoke","Reverse out at speed","Stay in the car with windows open"],"a":0,"e":"Smoke is the main killer in tunnel fires. Leave the vehicle, leave the keys in it, and head for the nearest exit."},
+{"c":"loading","q":"What should you check before towing a trailer for the first time?","o":["That your licence entitlement, the coupling, lights and load are all correct","Only the tyres","Only the lights","Nothing in particular"],"a":0,"e":"Also check the maximum authorised mass — your car and trailer together must stay within the legal limits."},
+{"c":"loading","q":"How does a full car of passengers affect your braking?","o":["It increases stopping distances","It shortens them","It has no effect","It only affects steering"],"a":0,"e":"More mass takes more distance to stop, so open up your following gap when the car is fully laden."},
+{"c":"loading","q":"What must you do if a load projects more than a metre beyond the rear of your vehicle?","o":["Make it clearly visible to other road users","Nothing extra","Drive only at night","Use hazard lights"],"a":0,"e":"Longer projections need proper marker boards, and very long loads require notifying the police."},
+{"c":"loading","q":"Where should you put heavy items when loading a hatchback boot?","o":["Low down and as far forward as possible","On top of everything else","Against the rear window","On the back seat unsecured"],"a":0,"e":"Keeping weight low and central keeps the car stable and stops items flying forward in a stop."},
+{"c":"loading","q":"You're fitting a bike rack to the back of your car. What must you check?","o":["That the number plate and lights are still visible","That the bikes are held on with at least one strap","That the rack is no wider than the car","That the boot can still be opened"],"a":0,"e":"An obscured number plate or lights is an offence. Some racks need a supplementary plate and light board."},
+{"c":"loading","q":"How does a roof box affect fuel consumption?","o":["It increases it because of the extra drag","It decreases it","No effect at all","Only above 70mph"],"a":0,"e":"Take it off when you're not using it — it costs money every mile it's up there."},
+{"c":"loading","q":"What should you do if you notice the trailer's load has shifted during a journey?","o":["Stop somewhere safe and secure it before continuing","Reduce speed and continue to your destination","Brake gently to settle the load back","Continue if the trailer is still tracking straight"],"a":0,"e":"A shifting load makes the trailer unstable and can throw items onto the road behind you."},
+{"c":"loading","q":"Who can be prosecuted if an insecure load falls from your vehicle?","o":["You, the driver","Only the person who loaded it","The insurance company","Nobody"],"a":0,"e":"Check the load before you leave and again after the first few miles of a long trip."},
+{"c":"signs","s":"keep_left","q":"What does this sign mean?","o":["Keep left","Turn left ahead","Traffic merging from the left","One way to the left"],"a":0,"e":"Usually on a traffic island or the start of a central reservation. The mirrored version means keep right."},
+{"c":"signs","s":"turn_left","q":"What does this sign mean?","o":["Turn left ahead","Keep left","Left bend ahead","No left turn"],"a":0,"e":"A blue circle giving a positive instruction — you must turn left at the junction ahead."},
+{"c":"signs","s":"cycle_route","q":"What does this sign mean?","o":["A route to be used by cycles only","No cycling","Cycles may cross here","Cycle parking"],"a":0,"e":"Blue circle, so it's mandatory. Where it's split by a white line, pedestrians use one side and cycles the other."},
+{"c":"signs","s":"no_cycling","q":"What does this sign mean?","o":["No cycling","Cycle route ahead","Cycles must dismount","Cycle lane ends"],"a":0,"e":"A red ring with a bicycle prohibits cycling on that stretch."},
+{"c":"signs","s":"no_uturn","q":"What does this sign mean?","o":["No U-turns","No right turn","Two-way traffic","Roundabout ahead"],"a":0,"e":"Find another way round — a U-turn here would be an offence and probably dangerous."},
+{"c":"signs","s":"roadworks","q":"What does this sign mean?","o":["Roadworks ahead","Loose chippings","Road closed","Uneven surface"],"a":0,"e":"Expect lane closures, temporary limits and people working close to traffic. Slow down and follow the cones."},
+{"c":"signs","s":"uneven","q":"What does this warning sign mean?","o":["Uneven road surface ahead","Road humps","Steep hill","Slippery road"],"a":0,"e":"Reduce speed — a rough surface upsets the car's balance and is dangerous for motorcyclists."},
+{"c":"signs","s":"weight_limit","q":"What does this sign mean?","o":["No vehicles over the weight shown","Maximum speed 7.5mph","Weighbridge ahead","Parking for goods vehicles"],"a":0,"e":"A red ring is a prohibition. Weight limits protect bridges and keep lorries out of unsuitable streets."},
+{"c":"signs","q":"What does a sign showing a bus and a bicycle on a blue background mean?","o":["The lane ahead is for buses and cycles","No buses or cycles","Bus stop ahead","Cycle hire point"],"a":0,"e":"Check the plate beneath for the hours it operates and which other vehicles may use it."},
+{"c":"signs","q":"What does a white circular sign with a black diagonal line mean on a dual carriageway?","o":["National speed limit applies — 70mph for cars","No overtaking","End of motorway","No stopping"],"a":0,"e":"The same sign means 60mph on a single carriageway, so you need to know which road you're on."},
+{"c":"signs","q":"What does a red triangle with an exclamation mark mean?","o":["A hazard not covered by other signs — read the plate underneath","Stop immediately","Emergency vehicles only","End of restriction"],"a":0,"e":"The plate tells you what the hazard is, such as 'fallen trees' or 'queues likely'."},
+{"c":"signs","q":"What does a blue rectangular sign with a white 'P' mean?","o":["Parking is available","No parking","Police station","Petrol station"],"a":0,"e":"Any plate beneath tells you the restrictions, charges or who it's reserved for."},
+{"c":"signs","q":"What does a broken white line across the mouth of a side road mean?","o":["Give way to traffic on the major road","Stop completely","No entry","Pedestrian crossing"],"a":0,"e":"It's the give way line. A solid line with a STOP sign means you must come to a complete halt."},
+{"c":"signs","q":"What does a sign with a black arrow pointing down on a blue background at a narrow road mean?","o":["You have priority over oncoming vehicles","Oncoming vehicles have priority","No entry","One way traffic"],"a":0,"e":"The red arrow on the sign shows the direction that must give way. The white-and-red version means you give way instead."},
+{"c":"incidents","q":"How can you tell that someone has had a cardiac arrest?","o":["They're unresponsive and not breathing normally","They're pale but talking","They complain of chest pain","They're unsteady on their feet"],"a":0,"e":"Occasional noisy gasps are not normal breathing. If they don't respond and aren't breathing properly, start CPR."},
+{"c":"incidents","q":"Where should you place your hands to give chest compressions to an adult?","o":["In the centre of the chest","On the upper abdomen","Over the left nipple","On the lower ribs"],"a":0,"e":"Heel of one hand in the centre of the chest, other hand on top, fingers interlocked, arms straight."},
+{"c":"incidents","q":"How deep should chest compressions be on an adult?","o":["5 to 6cm","1 to 2cm","2 to 3cm","10cm"],"a":0,"e":"Push hard and fast at 100 to 120 compressions a minute, letting the chest come all the way back up between each one."},
+{"c":"incidents","q":"Who is allowed to use a public-access defibrillator (AED)?","o":["Anyone — no training is needed","Trained first aiders only","Doctors and paramedics only","Police officers only"],"a":0,"e":"AEDs are designed for the public. They talk you through every step and will not deliver a shock unless one is needed."},
+{"c":"incidents","q":"What's the first thing you should do after switching on a defibrillator?","o":["Follow the spoken instructions it gives you","Give a shock straight away","Check the person's pulse","Wait for the ambulance"],"a":0,"e":"The machine tells you exactly what to do, including when to attach the pads and when to stand clear."},
+{"c":"incidents","q":"Where do the defibrillator pads go?","o":["On the bare chest, as shown in the pictures on the pads","Over clothing","On the back only","On the arms"],"a":0,"e":"The chest must be bare and dry. The pictures on the pads show exactly where each one goes."},
+{"c":"incidents","q":"What must you make sure of while a defibrillator is analysing the heart rhythm?","o":["That nobody is touching the person","That the person is sitting up","That someone is doing compressions","That the pads are removed"],"a":0,"e":"Contact interferes with the reading and risks anyone touching them receiving the shock. Stand clear when told to."},
+{"c":"incidents","q":"You're alone and someone has collapsed in cardiac arrest. What should you do?","o":["Call 999 on speakerphone, start CPR, and ask about the nearest defibrillator","Go and look for a defibrillator first","Drive them to hospital","Wait to see if they recover"],"a":0,"e":"The 999 operator can direct you to the nearest AED and talk you through CPR. Don't leave them to go searching alone."},
+{"c":"incidents","q":"How long should you keep giving CPR?","o":["Until emergency services take over or the person shows signs of life","For two minutes","Until you feel tired","Until the defibrillator arrives"],"a":0,"e":"Every minute without CPR and defibrillation cuts survival chances substantially, so keep going and swap with someone else if you can."},
+{"c":"docs","q":"How many of the 50 multiple-choice questions are based on a short video clip?","o":["Three","One","Ten","None"],"a":0,"e":"You watch a silent driving clip and answer three questions about it. You can replay the video as many times as you like."},
+{"c":"docs","q":"What can you do if you're unsure of an answer during the multiple-choice section?","o":["Flag it and come back to it before time runs out","Nothing — answers are final","Ask the invigilator","Skip it permanently"],"a":0,"e":"Flagged questions can be reviewed at any point in the 57 minutes. Hazard perception clips, by contrast, play once with no going back."},
+{"c":"margins","q":"Which TWO will increase your overall stopping distance?","o":["Tyres worn close to the legal limit","A wet road surface","Carrying a light load","Recently replaced brake pads"],"a":[0,1],"m":2,"e":"Worn tyres and a wet surface both cut grip, lengthening the braking part of the distance. Tiredness and distraction lengthen the thinking part."},
+{"c":"vehicle","q":"Which TWO faults would make your car illegal to drive?","o":["A tyre worn below 1.6mm of tread","A brake light that doesn't work","A stone chip outside the swept area of the windscreen","A missing parcel shelf"],"a":[0,1],"m":2,"e":"Tread depth and working lights are both legal requirements, with penalty points available for each defective tyre."},
+{"c":"motorway","q":"Which TWO are not allowed on a motorway?","o":["Learner drivers without an approved instructor","Motorcycles under 50cc","Cars towing caravans","Coaches"],"a":[0,1],"m":2,"e":"Also banned: cyclists, pedestrians, horse riders and most agricultural vehicles. Caravans and coaches are fine, with their own speed limits."},
+{"c":"hazard","q":"Which TWO make you more likely to become tired on a long journey?","o":["Driving late at night","A warm, stuffy cabin","Stopping every two hours","Sharing the driving"],"a":[0,1],"m":2,"e":"Your body clock dips overnight and warm air makes it worse. Breaks and shared driving are the defence, not the cause."},
+{"c":"vulnerable","q":"Which TWO road users are hardest to see at junctions?","o":["Motorcyclists","Cyclists","Bus drivers","Van drivers"],"a":[0,1],"m":2,"e":"Both are narrow enough to be hidden by a windscreen pillar, and both are travelling faster than they look."},
+{"c":"attitude","q":"A driver is following you far too closely. Which TWO should you do?","o":["Increase the gap to the vehicle in front","Ease off gradually so they can pass","Brake sharply to warn them","Switch on your rear fog lights"],"a":[0,1],"m":2,"e":"You can't control them, only the space around you. Brake lights and fog lights used as a message just escalate it."},
+{"c":"handling","q":"Which TWO should you check before setting off in fog?","o":["That your lights are clean and working","That the demisters and heated screens work","That your rear fog lights are already on","That your hazard lights are already on"],"a":[0,1],"m":2,"e":"Fog lights go on only once visibility drops below about 100 metres, and hazard lights are for warning of a hazard, not for driving in."},
+{"c":"docs","q":"Which TWO must be valid before you can tax a car?","o":["Insurance","An MOT certificate, if the car needs one","The V5C registration document","A full service history"],"a":[0,1],"m":2,"e":"The tax system checks the insurance and MOT databases automatically, so a lapse in either blocks the renewal."},
+{"c":"incidents","q":"You're first at the scene of a crash. Which TWO should you do first?","o":["Warn approaching traffic","Switch off the engines of the vehicles involved","Move casualties onto the verge","Give any casualty a warm drink"],"a":[0,1],"m":2,"e":"Make the scene safe before you treat anyone. Moving casualties risks worsening spinal injuries, and nothing should be given by mouth."},
+{"c":"loading","q":"Which TWO must you check before towing a trailer?","o":["That the coupling is properly secured","That the trailer's lights work","That you have breakdown cover","That the trailer is under two metres long"],"a":[0,1],"m":2,"e":"Also check tyres, load security and that you're within the maximum authorised mass for your licence."},
+{"c":"others","q":"Which TWO should you expect from a long vehicle at a roundabout?","o":["It may swing out to the right before turning left","It may straddle two lanes","It will accelerate away quickly","It will always take the first exit"],"a":[0,1],"m":2,"e":"Never move up the inside of a long vehicle positioned oddly — that gap is where the trailer is about to go."},
+{"c":"margins","q":"Which TWO help you keep control on an icy road?","o":["Braking gently and in good time","Using the highest gear that suits the speed","Braking firmly and late","Coasting with the clutch down"],"a":[0,1],"m":2,"e":"Smooth inputs and low engine torque keep the tyres rolling. Stopping distances can be up to ten times longer."},
+{"c":"vehicle","q":"Which TWO reduce the amount of fuel you use?","o":["Keeping tyres at the correct pressure","Removing a roof rack you aren't using","Carrying extra weight for stability","Accelerating hard between junctions"],"a":[0,1],"m":2,"e":"Drag and weight both cost fuel, and so does harsh acceleration. Reading the road ahead saves more than any gadget."},
+{"c":"alertness","q":"Which TWO can lead to prosecution as a distraction?","o":["Using a hand-held mobile phone","Programming a satnav while moving","Listening to the radio","Talking to a passenger"],"a":[0,1],"m":2,"e":"Both are hand-held device offences carrying six points. Conversation and radio aren't illegal but still divide your attention."},
+{"c":"rules","q":"Where must you NOT park? Mark two answers.","o":["Within 10 metres of a junction","Opposite a traffic island","In a signed parking bay","In a residential street"],"a":[0,1],"m":2,"e":"Also avoid school entrance markings, bus stops, level crossings and dropped kerbs."},
+{"c":"hazard","q":"Which TWO effects can prescribed medicine have on your driving?","o":["Drowsiness","Slower reactions","Improved concentration","Sharper vision"],"a":[0,1],"m":2,"e":"Driving while impaired by legal medication is still an offence. Ask your doctor or pharmacist before you drive."},
+{"c":"motorway","q":"You break down on a smart motorway with no hard shoulder. Which TWO should you do?","o":["Get to an emergency area if you can reach one","Leave the vehicle by the left-hand doors","Stay in the vehicle in the left-hand lane","Place a warning triangle behind the car"],"a":[0,1],"m":2,"e":"Never put out a triangle on a motorway. Get behind the barrier and use the SOS phone so the control room can close the lane."},
+{"c":"vulnerable","q":"Which TWO should you do when passing a horse and rider?","o":["Pass at no more than 10mph","Leave at least 2 metres of space","Sound your horn on approach","Accelerate once you're alongside"],"a":[0,1],"m":2,"e":"Noise and close passes are what startle horses. Stay slow until you're well past."},
+{"c":"handling","q":"Which TWO suggest your car is starting to aquaplane?","o":["The steering feels very light","The engine note rises without the car speeding up","The brakes grab suddenly","The wipers slow down"],"a":[0,1],"m":2,"e":"Ease off the accelerator and don't brake hard — let the speed fall until the tread can clear the water again."},
+{"c":"incidents","q":"A casualty is unconscious but breathing normally, with no suspected spinal injury. Which TWO should you do?","o":["Place them in the recovery position","Keep checking their breathing","Give them something to drink","Sit them upright against a wall"],"a":[0,1],"m":2,"e":"The recovery position keeps the airway clear if they vomit. Never give food or drink to someone who is unconscious."},
+{"c":"signs","q":"Which TWO are true about road signs?","o":["A red ring means something you must not do","A blue circle gives a positive instruction","A triangle gives an order you must obey","A rectangle always warns of a hazard"],"a":[0,1],"m":2,"e":"Circles order, triangles warn, rectangles inform. The only octagon is the stop sign."},
+{"c":"rules","q":"Which TWO are correct at a mini-roundabout?","o":["Give way to traffic coming from your right","Pass round the central marking where you can","Give way to traffic from the left","Drive straight across the central marking whatever your vehicle"],"a":[0,1],"m":2,"e":"Only vehicles too large to go round it may cross the painted circle. Signal your exit as you would at any roundabout."},
+{"c":"others","q":"Which TWO make overtaking a lorry different from overtaking a car?","o":["It takes much longer, so you need a far bigger gap","You'll be in the driver's blind spot for part of the move","Lorries always slow to let you past","Lorries can stop more quickly than cars"],"a":[0,1],"m":2,"e":"Don't pull back in until you can see the whole cab in your mirror, and never cut into the space a lorry needs to stop."},
+{"c":"attitude","q":"Which TWO are proper uses of your horn?","o":["To warn others that you're there","To alert a driver who hasn't seen you pulling out","To show your annoyance at bad driving","To thank a driver who let you through"],"a":[0,1],"m":2,"e":"The horn is a warning of presence only. Don't use it in a built-up area between 11.30pm and 7am unless a moving vehicle poses a danger."},
+{"cs":"town","c":"vulnerable","q":"As you pass the parked cars, what should concern you most?","o":["Children stepping out between the vehicles","The parked cars pulling away without signalling","Loose gravel at the kerb","Oncoming drivers flashing you through"],"a":0,"e":"Near a school, with children on the pavement, a child appearing from between parked cars is the hazard to plan for. Drop your speed and cover the brake."},
+{"cs":"town","c":"others","q":"The cyclist pulls out to pass the stopped bus. What should you do?","o":["Hold back and give them room to move out","Pass them before they reach the bus","Move left to keep your own line","Expect them to wait behind the bus"],"a":0,"e":"The cyclist has to move out — there's no room beside a bus. Treat it as a lane change and give them the space you'd give a car."},
+{"cs":"town","c":"margins","q":"The road is wet. How should that change your following distance?","o":["At least double the two-second gap","Keep the same gap and brake earlier","Halve the gap to stay in the flow","Add about half a second"],"a":0,"e":"Wet roads roughly double stopping distances, so four seconds is the minimum in these conditions."},
+{"cs":"country","c":"others","q":"You catch up with a tractor doing about 20mph. What should you do?","o":["Stay well back until you have a long, clear view to pass","Move out to the centre line to see past it","Follow closely so you're ready to go","Overtake as you approach the next bend"],"a":0,"e":"High hedges mean your view is limited and the tractor may turn into a field without much warning. Hanging back improves both."},
+{"cs":"country","c":"hazard","q":"There's mud on the road near the farm gate. What does this tell you?","o":["Grip is reduced and farm traffic may be turning in or out","The road is about to become unsurfaced","A flood has recently crossed the road","The surface has just been resurfaced"],"a":0,"e":"Mud is slippery, especially in the damp, and it's a clear sign of vehicles using that entrance."},
+{"cs":"country","c":"attitude","q":"The car behind is very close to your rear bumper. What should you do?","o":["Increase the gap in front so you can brake gently","Brake lightly to warn them off","Speed up to open a gap behind","Move onto the verge to let them by"],"a":0,"e":"More room ahead means you never need to brake hard, which is the thing most likely to cause them to hit you."},
+{"cs":"motorway","c":"motorway","q":"A red X shows over lane three. What must you do?","o":["Move out of that lane — it's closed","Reduce speed but stay in the lane","Treat it as a 50mph advisory limit","Use it only to overtake"],"a":0,"e":"Driving under a red X is an offence, and there may be a broken-down vehicle or a recovery crew just out of sight."},
+{"cs":"motorway","c":"margins","q":"Spray is heavy in the rain. What's the main risk?","o":["You can't see far enough ahead to plan","Your tyres will overheat","Your brakes will lock automatically","Your headlights will fail"],"a":0,"e":"Use dipped headlights, drop back, and remember stopping distances are at least doubled on a wet motorway."},
+{"cs":"motorway","c":"others","q":"A lorry begins to overtake you. What should you do?","o":["Ease off slightly so it can complete the move","Hold your speed exactly","Move closer to the left-hand line and accelerate","Flash your headlights once it's alongside"],"a":0,"e":"A lorry overtake takes a long time at a 50mph limit. Letting it finish clears the lane for everyone behind."}
+];
+
+/* =======================================================================
+   ROAD SIGN ARTWORK
+   ======================================================================= */
+const RED='#d4351c', BLUE='#0065bd', INK='#121212', WHT='#ffffff';
+const tri = inner => `<path d="M50 6 L95 84 A6 6 0 0 1 90 92 L10 92 A6 6 0 0 1 5 84 Z" fill="${WHT}" stroke="${RED}" stroke-width="8" stroke-linejoin="round"/>${inner}`;
+const ring = inner => `<circle cx="50" cy="50" r="45" fill="${WHT}"/><circle cx="50" cy="50" r="40" fill="none" stroke="${RED}" stroke-width="10"/>${inner}`;
+const blue = inner => `<circle cx="50" cy="50" r="45" fill="${BLUE}"/>${inner}`;
+const car = (x,y,s,col) => `<g transform="translate(${x} ${y}) scale(${s})" fill="${col}"><path d="M2 12 L6 5 H22 L26 12 V18 H2 Z"/><circle cx="7" cy="19" r="3"/><circle cx="21" cy="19" r="3"/></g>`;
+
+const bike = (x,y,sc,col) => `<g transform="translate(${x} ${y}) scale(${sc})" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="7.5"/><circle cx="34" cy="21" r="7.5"/><path d="M8 21 L17 8 H26 L34 21"/><path d="M17 8 L21 21"/><path d="M13 6 h8"/><path d="M24 6 h6"/></g>`;
+
+const SIGNS = {
+  keep_left:blue(`<g transform="rotate(-32 50 50)"><path d="M50 20 L68 44 H58 V78 H42 V44 H32 Z" fill="${WHT}"/></g>`),
+  turn_left:blue(`<path d="M58 78 V52 H36 V60 L20 46 L36 32 V40 H58 A10 10 0 0 1 68 50 V78 Z" fill="${WHT}"/>`),
+  cycle_route:blue(bike(29,40,.95,WHT)),
+  no_cycling:ring(bike(29,40,.9,INK)),
+  no_uturn:ring(`<path d="M34 74 V48 A16 16 0 0 1 66 48 V66" fill="none" stroke="${INK}" stroke-width="8" stroke-linecap="round"/><path d="M56 62 h20 l-10 16 Z" fill="${INK}"/>`),
+  roadworks:tri(`<g stroke="${INK}" stroke-width="5" stroke-linecap="round" fill="none"><path d="M44 54 L40 78"/><path d="M44 58 L58 50"/></g><circle cx="46" cy="44" r="6" fill="${INK}"/><path d="M56 44 L70 58 L64 64 L50 50 Z" fill="${INK}"/><rect x="28" y="80" width="46" height="5" rx="2" fill="${INK}"/>`),
+  uneven:tri(`<path d="M20 80 q9 -18 18 0 q9 -14 18 0 q9 -18 18 0" fill="none" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>`),
+  weight_limit:ring(`<text x="50" y="60" text-anchor="middle" font-family="Overpass,sans-serif" font-size="27" font-weight="800" fill="${INK}">7.5t</text>`),
+  stop:`<polygon points="30,3 70,3 97,30 97,70 70,97 30,97 3,70 3,30" fill="${RED}"/><text x="50" y="61" text-anchor="middle" font-family="Overpass,sans-serif" font-size="25" font-weight="800" fill="${WHT}">STOP</text>`,
+  give_way:`<path d="M8 14 H92 A4 4 0 0 1 95 20 L54 90 A5 5 0 0 1 46 90 L5 20 A4 4 0 0 1 8 14 Z" fill="${WHT}" stroke="${RED}" stroke-width="8" stroke-linejoin="round"/>`,
+  national_speed:`<circle cx="50" cy="50" r="45" fill="${WHT}"/><circle cx="50" cy="50" r="40" fill="none" stroke="${INK}" stroke-width="7"/><line x1="27" y1="73" x2="73" y2="27" stroke="${INK}" stroke-width="9" stroke-linecap="round"/>`,
+  no_entry:`<circle cx="50" cy="50" r="45" fill="${RED}"/><rect x="17" y="42" width="66" height="16" rx="2" fill="${WHT}"/>`,
+  no_overtaking:ring(car(20,42,.95,RED)+car(50,42,.95,INK)),
+  min_speed:blue(`<text x="50" y="64" text-anchor="middle" font-family="Overpass,sans-serif" font-size="38" font-weight="800" fill="${WHT}">30</text>`),
+  ahead_only:blue(`<path d="M50 20 L68 44 H58 V78 H42 V44 H32 Z" fill="${WHT}"/>`),
+  no_motor:ring(car(18,44,.85,INK)+`<g transform="translate(46 44)"><circle cx="6" cy="15" r="5.5" fill="none" stroke="${INK}" stroke-width="3"/><circle cx="28" cy="15" r="5.5" fill="none" stroke="${INK}" stroke-width="3"/><path d="M6 15 L15 7 H23 L28 15" fill="none" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><path d="M11 6 h11" stroke="${INK}" stroke-width="4" stroke-linecap="round"/><path d="M23 7 l5 -4" stroke="${INK}" stroke-width="3" stroke-linecap="round"/></g>`),
+  crossroads:tri(`<rect x="45" y="36" width="10" height="46" fill="${INK}"/><rect x="27" y="55" width="46" height="9" fill="${INK}"/>`),
+  t_junction:tri(`<rect x="29" y="46" width="42" height="9" fill="${INK}"/><rect x="45" y="46" width="10" height="36" fill="${INK}"/>`),
+  roundabout:tri(`<g fill="none" stroke="${INK}" stroke-width="7" stroke-linecap="round"><path d="M50 38 A16 16 0 0 1 64 62"/><path d="M58 72 A16 16 0 0 1 34 62"/><path d="M36 46 A16 16 0 0 1 50 38"/></g><path d="M64 58 l5 10 l-11 1 Z" fill="${INK}"/><path d="M36 66 l-5 -10 l11 -1 Z" fill="${INK}"/><path d="M52 34 l-9 6 l1 -11 Z" fill="${INK}"/>`),
+  signals:tri(`<rect x="40" y="34" width="20" height="46" rx="4" fill="${INK}"/><circle cx="50" cy="44" r="5.5" fill="#d4351c"/><circle cx="50" cy="57" r="5.5" fill="#ffb81c"/><circle cx="50" cy="70" r="5.5" fill="#00a862"/>`),
+  slippery:tri(car(34,44,1.15,INK)+`<g stroke="${INK}" stroke-width="5" fill="none" stroke-linecap="round"><path d="M24 76 q6 -8 0 -14 q-6 -6 0 -12"/><path d="M76 76 q-6 -8 0 -14 q6 -6 0 -12"/></g>`),
+  ped_crossing:tri(`<g fill="${INK}"><circle cx="50" cy="36" r="6"/><path d="M47 44 h7 l7 16 -6 3 -5 -10 v9 l7 18 -6 3 -8 -18 -6 10 -6 -4 9 -16 z"/></g>`),
+  hill_down:tri(`<text x="50" y="58" text-anchor="middle" font-family="Overpass,sans-serif" font-size="17" font-weight="800" fill="${INK}">10%</text><path d="M28 66 L76 84 H28 Z" fill="${INK}"/>`),
+  humps:tri(`<path d="M18 80 H36 q14 -28 28 0 H82" fill="none" stroke="${INK}" stroke-width="7" stroke-linecap="round"/>`),
+  two_way:tri(`<g fill="${INK}"><path d="M36 34 l10 14 h-6 v32 h-8 V48 h-6 Z"/><path d="M64 82 l-10 -14 h6 V36 h8 v32 h6 Z"/></g>`),
+  narrows:tri(`<g fill="none" stroke="${INK}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M30 84 V62 L40 44"/><path d="M70 84 V62 L60 44"/></g>`),
+  no_stopping:`<circle cx="50" cy="50" r="45" fill="${BLUE}"/><circle cx="50" cy="50" r="40" fill="none" stroke="${RED}" stroke-width="9"/><line x1="24" y1="24" x2="76" y2="76" stroke="${RED}" stroke-width="9" stroke-linecap="round"/><line x1="76" y1="24" x2="24" y2="76" stroke="${RED}" stroke-width="9" stroke-linecap="round"/>`,
+  no_waiting:`<circle cx="50" cy="50" r="45" fill="${BLUE}"/><circle cx="50" cy="50" r="40" fill="none" stroke="${RED}" stroke-width="9"/><line x1="27" y1="73" x2="73" y2="27" stroke="${RED}" stroke-width="9" stroke-linecap="round"/>`,
+  one_way:`<rect x="4" y="26" width="92" height="48" rx="4" fill="${BLUE}"/><path d="M78 50 L60 38 v7 H18 v10 h42 v7 Z" fill="${WHT}"/>`
+};
+function signSVG(id){ return `<svg viewBox="0 0 100 100" role="img" aria-label="road sign">${SIGNS[id]||''}</svg>`; }
+
+/* =======================================================================
+   STATE
+   ======================================================================= */
+const TOTAL = BANK.length;
+const KEY = 'dante-theory-v1';
+let S = {
+  xp:0, seen:{}, wrongIds:[], streak:0, lastDay:null,
+  mocks:[], badges:[], testDate:null, totalAnswered:0, totalRight:0
+};
+let memoryOnly = false;
+
+const hasClaudeStore = typeof window.storage === 'object' && window.storage !== null
+                    && typeof window.storage.get === 'function';
+async function load(){
+  try{
+    let raw = null;
+    if(hasClaudeStore){
+      const r = await window.storage.get(KEY);
+      raw = r && r.value;
+    }else{
+      raw = window.localStorage.getItem(KEY);
+    }
+    if(raw) S = Object.assign(S, JSON.parse(raw));
+  }catch(e){ /* first run, or storage blocked */ }
+  touchStreak();
+}
+async function save(){
+  if(memoryOnly) return;
+  try{
+    const raw = JSON.stringify(S);
+    if(hasClaudeStore) await window.storage.set(KEY, raw);
+    else window.localStorage.setItem(KEY, raw);
+  }catch(e){ memoryOnly = true; }
+}
+function today(){ return new Date().toISOString().slice(0,10); }
+function touchStreak(){
+  const t = today();
+  if(S.lastDay === t) return;
+  const y = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  S.streak = (S.lastDay === y) ? S.streak+1 : 1;
+  S.lastDay = t;
+  save();
+}
+
+/* ---------- derived numbers ---------- */
+const RANKS = [
+  {xp:0,    name:'Provisional'},
+  {xp:250,  name:'L-Plater'},
+  {xp:700,  name:'Junction Handler'},
+  {xp:1400, name:'Sign Reader'},
+  {xp:2300, name:'Motorway Merger'},
+  {xp:3400, name:'Hazard Hunter'},
+  {xp:4800, name:'Test Ready'},
+  {xp:6500, name:'Full Licence'}
+];
+function rank(){
+  let i=0; for(let k=0;k<RANKS.length;k++) if(S.xp>=RANKS[k].xp) i=k;
+  const cur=RANKS[i], nxt=RANKS[i+1];
+  const pct = nxt ? Math.round(((S.xp-cur.xp)/(nxt.xp-cur.xp))*100) : 100;
+  return {name:cur.name, next:nxt?nxt.name:null, need:nxt?nxt.xp-S.xp:0, pct};
+}
+function masteredCount(){ return Object.values(S.seen).filter(v=>v.r>0).length; }
+function readiness(){ return Math.round((masteredCount()/TOTAL)*100); }
+function accuracy(){ return S.totalAnswered ? Math.round((S.totalRight/S.totalAnswered)*100) : 0; }
+function catStats(c){
+  const ids = BANK.map((q,i)=>[q,i]).filter(x=>x[0].c===c).map(x=>x[1]);
+  const done = ids.filter(i=>S.seen[i] && S.seen[i].r>0).length;
+  return {total:ids.length, done, pct: Math.round((done/ids.length)*100), ids};
+}
+function daysToTest(){
+  if(!S.testDate) return null;
+  const d = Math.ceil((new Date(S.testDate+'T12:00') - new Date())/86400000);
+  return d;
+}
+
+/* =======================================================================
+   BADGES
+   ======================================================================= */
+const BADGES = [
+  {id:'ignition', em:'🔑', name:'Ignition',      desc:'Answer your first 10'},
+  {id:'century',  em:'💯', name:'Century',       desc:'Answer 100 questions'},
+  {id:'grinder',  em:'⚙️', name:'The Grinder',   desc:'Answer 300 questions'},
+  {id:'flawless', em:'✨', name:'Flawless Run',  desc:'Full marks in a topic drill'},
+  {id:'streak3',  em:'🔥', name:'Three in a Row',desc:'Revise 3 days running'},
+  {id:'streak7',  em:'🏆', name:'Week Streak',   desc:'Revise 7 days running'},
+  {id:'boss',     em:'🛡️', name:'Boss Down',     desc:'Pass a full mock test'},
+  {id:'ace',      em:'👑', name:'Near Perfect',  desc:'Score 48+ in a mock'},
+  {id:'signs',    em:'🚦', name:'Sign Language',  desc:'Full marks in a sign drill'},
+  {id:'redeemed', em:'♻️', name:'Redeemed',      desc:'Clear 10 weak spots'}
+];
+function award(id){
+  if(S.badges.includes(id)) return;
+  S.badges.push(id);
+  const b = BADGES.find(x=>x.id===id);
+  toast(b.em+'  Unlocked: '+b.name);
+  save();
+}
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+
+/* =======================================================================
+   SPLASH
+   ======================================================================= */
+let splashTimer;
+function closeSplash(){
+  const el = document.getElementById('splash');
+  if(!el) return;
+  clearTimeout(splashTimer);
+  el.classList.add('gone');
+  setTimeout(()=>el.remove(), 500);
+}
+function fillSplash(){
+  const el = document.getElementById('splash');
+  if(!el) return;
+  const returning = S.totalAnswered > 0;
+  const d = daysToTest();
+  document.getElementById('spHi').textContent = returning ? 'Welcome back' : 'Welcome to your theory test garage';
+  let sub;
+  if(d===0) sub = "It's test day. Go and pass it.";
+  else if(d===1) sub = 'Test tomorrow. One last run through your weak spots.';
+  else if(d!==null && d>1) sub = d + ' days until your test.';
+  else if(returning) sub = "Right then — where were we?";
+  else sub = TOTAL + " questions, 14 topics and a full mock test. Let's get you road legal.";
+  document.getElementById('spSub').textContent = sub;
+  if(returning){
+    document.getElementById('spStats').textContent =
+      readiness() + '% ready · ' + S.streak + ' day streak · ' + S.xp + ' XP' +
+      (S.wrongIds.length ? ' · ' + S.wrongIds.length + ' weak spots' : '');
+  }
+  splashTimer = setTimeout(closeSplash, 4500);
+}
+
+/* =======================================================================
+   SCREENS
+   ======================================================================= */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function greeting(){
+  const h = new Date().getHours();
+  if(h<5) return 'Still up, Dante';
+  if(h<12) return 'Morning, Dante';
+  if(h<18) return 'Afternoon, Dante';
+  return 'Evening, Dante';
+}
+function countdownLine(){
+  const d = daysToTest();
+  if(d===null) return 'Add your test date in settings';
+  if(d<0) return 'Test day has been and gone — good luck out there';
+  if(d===0) return 'Test is today. You know this stuff.';
+  if(d===1) return 'Test is tomorrow';
+  return d + ' days until your test';
+}
+
+function gauge(pct){
+  const SEG = 34, lit = Math.round(SEG*pct/100);
+  let segs = '';
+  for(let i=0;i<SEG;i++){
+    const a = (-90 + (i+.5)*(180/SEG))*Math.PI/180;
+    const inr = 92, out = i%4===0 ? 116 : 110;
+    const x1=150+Math.sin(a)*inr, y1=150-Math.cos(a)*inr;
+    const x2=150+Math.sin(a)*out, y2=150-Math.cos(a)*out;
+    const t = i/(SEG-1);
+    const col = `rgb(${Math.round(63+(46-63)*t)},${Math.round(208+(230-208)*t)},${Math.round(255+(168-255)*t)})`;
+    segs += `<line class="seg" data-c="${col}" data-on="${i<lit?1:0}"
+      x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"
+      stroke="rgba(110,160,215,.20)" stroke-width="${i%4===0?5:3.4}" stroke-linecap="round"
+      style="transition:stroke .3s ease ${i*16}ms, filter .3s ease ${i*16}ms"/>`;
+  }
+  return `<div class="gaugewrap">
+    <svg class="gauge" viewBox="0 0 300 186" aria-label="Test readiness ${pct} per cent">
+      <path d="M44 150 A106 106 0 0 1 256 150" fill="none" stroke="rgba(96,178,255,.10)" stroke-width="1.5"/>
+      <path d="M62 150 A88 88 0 0 1 238 150" fill="none" stroke="rgba(96,178,255,.07)" stroke-width="1"/>
+      ${segs}
+      <g id="needle" transform="rotate(-90 150 150)" style="transition:transform 1.1s cubic-bezier(.2,.8,.2,1)">
+        <path d="M150 74 L143 87 H157 Z" fill="#ffc447" style="filter:drop-shadow(0 0 6px rgba(255,196,71,.9))"/>
+      </g>
+    </svg>
+    <div class="gaugeval"><div class="pct">${pct}<i>%</i></div></div>
+  </div>`;
+}
+function sweepGauge(pct){
+  const segs = document.querySelectorAll('.seg'), needle = document.getElementById('needle');
+  requestAnimationFrame(()=>{
+    segs.forEach(el=>{
+      if(el.dataset.on==='1'){
+        el.setAttribute('stroke', el.dataset.c);
+        el.style.filter = 'drop-shadow(0 0 5px '+el.dataset.c+')';
+      }
+    });
+    if(needle) needle.setAttribute('transform', `rotate(${-90+pct*1.8} 150 150)`);
+  });
+}
+
+function renderHome(){
+  const r = rank(), pct = readiness();
+  document.getElementById('s-home').innerHTML = `
+    <div class="cluster">
+      <span class="brk tl"></span><span class="brk br"></span>
+      <div class="hello">${greeting()} — ${esc(countdownLine())}</div>
+      ${gauge(pct)}
+      <div class="readout">
+        <div class="lab">Test readiness · ${masteredCount()} of ${TOTAL} questions answered correctly</div>
+        <div class="rank">🏅 ${r.name}${r.next?` · ${r.need} XP to ${r.next}`:''}</div>
+        <div class="xpbar"><i style="width:${r.pct}%"></i></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>${S.xp}</b><span>XP</span></div>
+        <div class="stat"><b>${S.streak}🔥</b><span>day streak</span></div>
+        <div class="stat"><b>${accuracy()}%</b><span>accuracy</span></div>
+      </div>
+    </div>
+
+    <div class="menu">
+      <button class="tile" onclick="startQuick()">
+        <span class="ico">⚡</span><span><b>Quick 10</b><span>Ten random questions, instant feedback</span></span></button>
+      <button class="tile" onclick="renderTopics()">
+        <span class="ico">🗂️</span><span><b>Drill a topic</b><span>All 14 sections, ${TOTAL} questions</span></span></button>
+      <button class="tile" onclick="startSigns()">
+        <span class="ico">🛑</span><span><b>Sign lab</b><span>Name the sign before the timer in your head runs out</span></span></button>
+      <button class="tile" onclick="startWeak()">
+        <span class="ico">🩹</span><span><b>Weak spots</b><span>${S.wrongIds.length} question${S.wrongIds.length===1?'':'s'} waiting to be fixed</span></span></button>
+      <button class="tile boss" onclick="startMock()">
+        <span class="ico">🎮</span><span><b>Boss run: full mock test</b><span>50 questions · 57 minutes · 43 to pass</span></span></button>
+      <button class="tile" onclick="renderBadges()">
+        <span class="ico">🏅</span><span><b>Achievements</b><span>${S.badges.length} of ${BADGES.length} unlocked</span></span></button>
+      <button class="tile" onclick="renderSettings()">
+        <span class="ico">⚙️</span><span><b>Test date and progress</b><span>Set the countdown or reset everything</span></span></button>
+    </div>
+    <p class="small mute" style="margin-top:18px">${S.mocks.length ? 'Last mock: '+S.mocks[S.mocks.length-1]+'/50' : 'No mock test attempted yet. Do one this week.'}</p>
+    <div class="foot">
+      <b style="color:var(--ice);font-weight:600">Read this before you rely on it.</b>
+      These are original questions written from The Highway Code and Know Your Traffic Signs.
+      They cover the same 14 DVSA topics in roughly the same proportions as the real test, but they
+      are <b style="color:var(--ice);font-weight:600">not</b> the official DVSA questions and this site
+      isn't connected to the DVSA. Use it to learn the rules, then check yourself against the official
+      DVSA app, which uses the licensed question bank and includes the hazard perception clips this site can't.
+      Aim for 48+ here before you book.
+    </div>`;
+  show('s-home');
+  sweepGauge(pct);
+}
+
+function renderTopics(){
+  const rows = Object.keys(CATS).map(c=>{
+    const st = catStats(c);
+    const dash = 2*Math.PI*15;
+    return `<button class="topic" onclick="startTopic('${c}')">
+      <svg class="ring" width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
+        <circle cx="19" cy="19" r="15" fill="none" stroke="rgba(96,178,255,.16)" stroke-width="4"/>
+        <circle cx="19" cy="19" r="15" fill="none" stroke="${st.pct>=80?'#2ee6a8':'#3fd0ff'}" stroke-width="4"
+          stroke-linecap="round" stroke-dasharray="${(dash*st.pct/100).toFixed(1)} ${dash}" transform="rotate(-90 19 19)"/>
+      </svg>
+      <span class="tx"><b>${CATS[c].emoji} ${CATS[c].name}</b><span>${st.done}/${st.total} correct · ${st.pct}%</span></span>
+      <span class="mute">›</span></button>`;
+  }).join('');
+  document.getElementById('s-topics').innerHTML =
+    `<button class="back" onclick="renderHome()">‹ Back</button>
+     <h2>Pick a topic</h2>
+     <p class="mute small">The ring fills as you get each question right at least once.</p>
+     <div style="margin-top:8px">${rows}</div>`;
+  show('s-topics');
+}
+
+function renderBadges(){
+  const cards = BADGES.map(b=>`
+    <div class="badge ${S.badges.includes(b.id)?'won':''}">
+      <div class="em">${b.em}</div><b>${b.name}</b><span>${b.desc}</span></div>`).join('');
+  document.getElementById('s-badges').innerHTML =
+    `<button class="back" onclick="renderHome()">‹ Back</button>
+     <h2>Achievements</h2>
+     <p class="mute small">${S.badges.length} of ${BADGES.length} unlocked.</p>
+     <div class="ach">${cards}</div>`;
+  show('s-badges');
+}
+
+function renderSettings(){
+  document.getElementById('s-settings').innerHTML =
+    `<button class="back" onclick="renderHome()">‹ Back</button>
+     <h2>Test date and progress</h2>
+     <p class="mute small">Set the date and the dashboard counts down to it.</p>
+     <input type="date" id="dateIn" value="${S.testDate||''}">
+     <button class="btn" onclick="saveDate()">Save test date</button>
+     <p class="mute small" style="margin-top:26px">Starting again wipes your XP, streak, badges and weak spots. There's no undo.</p>
+     <button class="btn ghost" onclick="wipe()">Reset all progress</button>
+     ${memoryOnly?'<p class="small mute" style="margin-top:20px">Progress can\'t be saved in this session, so it will only last until you close the page.</p>':''}`;
+  show('s-settings');
+}
+function saveDate(){
+  S.testDate = document.getElementById('dateIn').value || null;
+  save(); toast('Test date saved'); renderHome();
+}
+async function wipe(){
+  S = {xp:0, seen:{}, wrongIds:[], streak:1, lastDay:today(), mocks:[], badges:[], testDate:null, totalAnswered:0, totalRight:0};
+  await save(); toast('Progress reset'); renderHome();
+}
+
+/* =======================================================================
+   QUIZ ENGINE
+   ======================================================================= */
+let Q = null;  // {ids, i, mode, label, picks:[], answered:bool, endsAt, timer}
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];} return a; }
+function allIds(){ return BANK.map((q,i)=>q.cs?-1:i).filter(i=>i>=0); }
+
+function begin(ids, mode, label){
+  if(!ids.length){ toast('Nothing to practise here yet'); return; }
+  Q = {ids, i:0, mode, label, picks:new Array(ids.length).fill(null), answered:false, endsAt:null, timer:null,
+       orders: ids.map(id => shuffle(BANK[id].o.map((_,k)=>k)))};
+  if(mode==='mock'){
+    Q.endsAt = Date.now() + 57*60*1000;
+    Q.timer = setInterval(tick, 1000);
+  }
+  drawQ();
+  show('s-quiz');
+}
+function startQuick(){ begin(shuffle(allIds()).slice(0,10), 'practice', 'Quick 10'); }
+function startTopic(c){ begin(shuffle(catStats(c).ids), 'practice', CATS[c].name); }
+function startSigns(){ begin(shuffle(BANK.map((q,i)=>q.s?i:-1).filter(i=>i>=0)), 'practice', 'Sign lab'); }
+function startWeak(){
+  if(!S.wrongIds.length){ toast('No weak spots. Keep it that way.'); return; }
+  begin(shuffle(S.wrongIds).slice(0,20), 'weak', 'Weak spots');
+}
+/* The real test doesn't sample topics evenly — signs, rules of the road, hazard
+   awareness and safety margins carry the most questions, while documents and
+   vehicle loading usually contribute one or two. This mirrors that spread. */
+const MOCK_WEIGHTS = {signs:7, rules:6, hazard:5, margins:4, vulnerable:4, motorway:4,
+                      vehicle:3, handling:3, alertness:3, attitude:2, others:2,
+                      incidents:2, docs:1, loading:1};
+function startMock(){
+  let picked = [];
+  for(const c in MOCK_WEIGHTS){
+    const pool = BANK.map((q,i)=>(q.c===c && !q.cs) ? i : -1).filter(i=>i>=0);
+    picked = picked.concat(shuffle(pool).slice(0, MOCK_WEIGHTS[c]));
+  }
+  picked = shuffle(picked);
+  // the scenario questions come last, as the video-clip questions do in the real test
+  const caseId = shuffle(Object.keys(CASES))[0];
+  const caseQs = BANK.map((q,i)=>q.cs===caseId ? i : -1).filter(i=>i>=0);
+  begin(picked.slice(0, 50-caseQs.length).concat(caseQs), 'mock', 'Mock test');
+}
+
+function tick(){
+  const left = Q.endsAt - Date.now();
+  const el = document.getElementById('clock');
+  if(!el) return;
+  if(left<=0){ clearInterval(Q.timer); finish(); return; }
+  const m = Math.floor(left/60000), s = Math.floor(left%60000/1000);
+  el.textContent = m+':'+String(s).padStart(2,'0');
+  el.classList.toggle('warn', left < 5*60000);
+}
+
+function isMulti(q){ return Array.isArray(q.a); }
+function sameSet(a,b){
+  if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length) return false;
+  const x=a.slice().sort(), y=b.slice().sort();
+  return x.every((v,i)=>v===y[i]);
+}
+function wasRight(n){
+  const q = BANK[Q.ids[n]], p = Q.picks[n];
+  return isMulti(q) ? sameSet(p, q.a) : p===q.a;
+}
+
+function drawQ(){
+  const id = Q.ids[Q.i], q = BANK[id], mock = Q.mode==='mock', multi = isMulti(q);
+  const letters = ['A','B','C','D'], ord = Q.orders[Q.i];
+  const opts = ord.map((orig,k)=>`
+    <button class="opt" id="o${k}" onclick="pick(${k})">
+      <span class="k">${letters[k]}</span><span>${esc(q.o[orig])}</span></button>`).join('');
+  const cse = q.cs ? CASES[q.cs] : null;
+  document.getElementById('s-quiz').innerHTML = `
+    <div class="qhead">
+      <span class="meta">${esc(Q.label)} · ${Q.i+1} of ${Q.ids.length}${mock?` · ${Q.picks.filter(p=>p!==null).length} answered`:''}</span>
+      ${mock ? `<span style="display:flex;align-items:center;gap:12px">
+                  <button class="back" style="margin:0;padding:0" onclick="abandon()">Abandon</button>
+                  <span class="clock" id="clock">57:00</span></span>`
+             : `<button class="back" style="margin:0;padding:0" onclick="quit()">Quit</button>`}
+    </div>
+    <div class="prog"><i style="width:${(Q.i/Q.ids.length*100)}%"></i></div>
+    ${cse ? `<div class="scenario"><b>${esc(cse.title)}</b>${esc(cse.text)}</div>` : ''}
+    ${q.s ? `<div class="signbox">${signSVG(q.s)}</div>` : ''}
+    <p class="qtext">${esc(q.q)}</p>
+    ${multi ? `<p class="pick">Mark ${q.m===2?'two':q.m} answers</p>` : ''}
+    <div class="opts">${opts}</div>
+    <div id="feedback"></div>
+    ${mock ? `<div class="sticky"><div class="row">
+        ${Q.i>0?'<button class="btn ghost" onclick="prev()">Previous</button>':''}
+        <button class="btn${Q.i===Q.ids.length-1?' go':' ghost'}" onclick="skip()">${Q.i===Q.ids.length-1?'Finish test':'Next question'}</button>
+      </div></div>` : ''}`;
+  Q.answered = false;
+  if(mock && Q.picks[Q.i]!==null){
+    const chosen = multi ? Q.picks[Q.i] : [Q.picks[Q.i]];
+    chosen.forEach(orig=>{
+      const d = ord.indexOf(orig);
+      if(d>-1) document.getElementById('o'+d).classList.add('sel');
+    });
+  }
+  if(mock) tick();
+}
+
+function pick(k){
+  const id = Q.ids[Q.i], q = BANK[id], ord = Q.orders[Q.i], chosen = ord[k];
+  const mock = Q.mode==='mock', multi = isMulti(q);
+
+  if(multi){
+    if(Q.answered) return;
+    let cur = Array.isArray(Q.picks[Q.i]) ? Q.picks[Q.i].slice() : [];
+    const at = cur.indexOf(chosen);
+    if(at>-1) cur.splice(at,1); else cur.push(chosen);
+    while(cur.length > q.m) cur.shift();
+    Q.picks[Q.i] = cur.length ? cur : null;
+    ord.forEach((orig,j)=>document.getElementById('o'+j).classList.toggle('sel', cur.includes(orig)));
+    if(!mock && cur.length===q.m) reveal(q, ord, cur);
+    return;
+  }
+
+  if(mock){
+    Q.picks[Q.i]=chosen;
+    for(let j=0;j<ord.length;j++) document.getElementById('o'+j).classList.toggle('sel', j===k);
+    return;
+  }
+  if(Q.answered) return;
+  Q.picks[Q.i]=chosen;
+  reveal(q, ord, chosen);
+}
+
+function reveal(q, ord, picked){
+  Q.answered = true;
+  const multi = isMulti(q);
+  const correct = multi ? q.a : [q.a];
+  const chosen = multi ? picked : [picked];
+  const right = multi ? sameSet(picked, q.a) : picked===q.a;
+  ord.forEach((orig,j)=>{
+    const el = document.getElementById('o'+j);
+    el.disabled = true; el.classList.remove('sel');
+    if(correct.includes(orig)) el.classList.add('right');
+    else if(chosen.includes(orig)) el.classList.add('wrong');
+  });
+  record(Q.ids[Q.i], right);
+  const label = right ? 'Correct'
+    : multi ? 'Not quite — the correct answers are shown in green'
+            : 'Not quite — the answer is ' + ['A','B','C','D'][ord.indexOf(q.a)];
+  document.getElementById('feedback').innerHTML = `
+    <div class="why ${right?'ok':'no'}"><b>${label}</b>${esc(q.e)}</div>
+    <button class="btn ${right?'go':''}" onclick="next()">${Q.i===Q.ids.length-1?'See results':'Next question'}</button>`;
+  const fb = document.getElementById('feedback');
+  if(fb.scrollIntoView) fb.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function record(id, right){
+  S.seen[id] = S.seen[id] || {r:0,w:0};
+  S.totalAnswered++;
+  if(right){
+    const first = S.seen[id].r===0;
+    S.seen[id].r++; S.totalRight++;
+    S.xp += first ? 10 : 4;
+    const at = S.wrongIds.indexOf(id);
+    if(at>-1){
+      S.wrongIds.splice(at,1);
+      S.fixed = (S.fixed||0)+1;
+      if(S.fixed>=10) award('redeemed');
+    }
+  }else{
+    S.seen[id].w++;
+    if(!S.wrongIds.includes(id)) S.wrongIds.push(id);
+  }
+  if(S.totalAnswered>=10) award('ignition');
+  if(S.totalAnswered>=100) award('century');
+  if(S.totalAnswered>=300) award('grinder');
+  if(S.streak>=3) award('streak3');
+  if(S.streak>=7) award('streak7');
+  save();
+}
+
+function next(){ if(Q.i<Q.ids.length-1){ Q.i++; drawQ(); } else finish(); }
+function skip(){ if(Q.i<Q.ids.length-1){ Q.i++; drawQ(); } else finish(); }
+function prev(){ if(Q.i>0){ Q.i--; drawQ(); } }
+function quit(){ if(Q&&Q.timer) clearInterval(Q.timer); Q=null; renderHome(); }
+function abandon(){
+  const done = Q.picks.filter(p=>p!==null).length;
+  if(confirm('Abandon the mock? '+done+' of '+Q.ids.length+' answered. Nothing will be scored.')) quit();
+}
+
+/* =======================================================================
+   RESULTS
+   ======================================================================= */
+function finish(){
+  if(Q.timer) clearInterval(Q.timer);
+  const mock = Q.mode==='mock';
+  let score = 0;
+  const byCat = {};
+  Q.ids.forEach((id,n)=>{
+    const q = BANK[id], right = wasRight(n);
+    if(mock) record(id, right);
+    if(right) score++;
+    byCat[q.c] = byCat[q.c] || {r:0,t:0};
+    byCat[q.c].t++; if(right) byCat[q.c].r++;
+  });
+  const total = Q.ids.length;
+  const pass = mock ? score>=43 : score/total>=0.86;
+
+  if(mock){
+    S.mocks.push(score);
+    if(score>=43){ S.xp += 100; award('boss'); }
+    if(score>=48) award('ace');
+  }else if(score===total && total>=8){
+    award(Q.label==='Sign lab' ? 'signs' : 'flawless');
+  }
+  save();
+
+  const missed = Q.ids.map((id,n)=>({id,n})).filter(x=>!wasRight(x.n));
+  const review = missed.map(x=>{
+    const q = BANK[x.id];
+    return `<div style="border-bottom:1px solid rgba(96,178,255,.14);padding:12px 0">
+      ${q.s?`<div style="width:60px;margin-bottom:6px">${signSVG(q.s)}</div>`:''}
+      <div style="font-weight:600">${esc(q.q)}</div>
+      <div class="small" style="color:var(--go);margin-top:4px">Answer: ${esc(isMulti(q)? q.a.map(i=>q.o[i]).join(' + ') : q.o[q.a])}</div>
+      <div class="small mute" style="margin-top:2px">${esc(q.e)}</div></div>`;
+  }).join('');
+
+  const rows = Object.keys(byCat).map(c=>{
+    const b = byCat[c], p = Math.round(b.r/b.t*100);
+    return `<div class="brow"><span style="width:26px">${CATS[c].emoji}</span>
+      <span class="nm">${CATS[c].name}</span>
+      <span class="bar"><i style="width:${p}%;background:${p>=80?'var(--go)':p>=50?'var(--amber)':'var(--stop)'};box-shadow:0 0 8px currentColor"></i></span>
+      <span class="n">${b.r}/${b.t}</span></div>`;
+  }).join('');
+
+  let verdictWord, note;
+  if(mock){
+    verdictWord = pass ? 'PASS' : 'NOT YET';
+    note = pass
+      ? (score>=48 ? 'That would have been a comfortable pass. Do another one in a couple of days to prove it wasn\'t luck.'
+                   : 'Over the line. Keep mocking until you\'re clearing 46+ every time.')
+      : 'You needed 43. Everything you missed is now sitting in your weak spots — go clear it, then run this again.';
+  }else{
+    verdictWord = score===total ? 'CLEAN SWEEP' : score/total>=0.86 ? 'SOLID' : 'NEEDS WORK';
+    note = score===total ? 'Nothing missed. Pick a harder topic.'
+         : 'Anything you got wrong is in your weak spots now.';
+  }
+
+  document.getElementById('s-result').innerHTML = `
+    <div class="verdict">
+      <div class="big ${mock?(pass?'pass':'fail'):''}">${score}<span>/${total}</span></div>
+      <div class="word ${mock?(pass?'pass':'fail'):''}">${verdictWord}</div>
+      ${mock?`<p class="mute small">Pass mark is 43 out of 50 · ${Math.round(score/total*100)}%</p>`:''}
+    </div>
+    <p>${note}</p>
+    <div class="breakdown"><h3 style="margin-bottom:6px">How it broke down</h3>${rows}</div>
+    ${missed.length?`<h3 style="margin-top:24px">What you missed (${missed.length})</h3>${review}`:''}
+    <div class="row" style="margin-top:20px">
+      <button class="btn ghost" onclick="renderHome()">Home</button>
+      <button class="btn" onclick="${mock?'startMock()':'startWeak()'}">${mock?'Another mock':'Fix weak spots'}</button>
+    </div>`;
+  Q = null;
+  show('s-result');
+}
+
+/* =======================================================================
+   GO
+   ======================================================================= */
+(async function(){
+  await load();
+  renderHome();
+  fillSplash();
+})();
+</script>
