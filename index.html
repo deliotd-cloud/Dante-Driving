@@ -1974,277 +1974,625 @@ function finish(){
 
 /* =======================================================================
    HAZARD PERCEPTION
-   The real test uses filmed clips. This renders a simplified driving scene
-   instead, but the scoring works exactly as DVSA's does: each developing
-   hazard has a five-band window, and the earlier you spot it the more you
-   score. Clicking constantly scores zero for that clip, as it does in the
-   real test.
+   The real test has used computer-generated clips since January 2015, so
+   this works the same way rather than trying to imitate video. 14 clips
+   carry 15 scoreable hazards — one clip has two, and you're never told
+   which. Scoring is DVSA's five-band system.
    ======================================================================= */
 
 const HZ = {
   run:null, clip:null, raf:null, canvas:null, ctx:null,
-  t:0, last:0, clicks:[], scored:[], flagged:false
+  t:0, last:0, clicks:[], scored:[], flagged:false, rain:[]
 };
 
-/* ---------- scene building blocks ---------- */
-function hzCar(x, z, colour, opts){
-  return Object.assign({kind:'car', x, z, w:1.8, h:1.45, colour:colour||'#2d4f86', speed:0}, opts||{});
+/* ---------- environments ---------- */
+const ENVS = {
+  residential:{name:'Residential street', speed:10, half:4.0, kerb:true,  scenery:'houses', oncoming:0.2},
+  highstreet: {name:'High street',        speed:10, half:4.4, kerb:true,  scenery:'shops',  oncoming:0.5},
+  town:       {name:'Town road',          speed:12, half:4.4, kerb:true,  scenery:'shops',  oncoming:0.5},
+  country:    {name:'Country lane',       speed:14, half:3.3, kerb:false, scenery:'hedge',  oncoming:0.2},
+  rural:      {name:'Rural A road',       speed:16, half:3.8, kerb:false, scenery:'trees',  oncoming:0.6},
+  dual:       {name:'Dual carriageway',   speed:20, half:7.0, kerb:false, scenery:'verge',  oncoming:0, lanes:2}
+};
+
+/* ---------- light and weather ---------- */
+const SKIES = {
+  day:     {top:'#2c6ea6', bot:'#a8cbe6', ground:'#315c33', road:'#4b4e56', kerb:'#767a83', line:'#eef2f6', haze:'#bcd6ea', vis:160, shadow:.28},
+  overcast:{top:'#57646f', bot:'#96a2ac', ground:'#3b5340', road:'#4a4d53', kerb:'#6e737b', line:'#e6ebef', haze:'#a3aeb8', vis:140, shadow:.12},
+  dusk:    {top:'#1b2c4e', bot:'#c06f3f', ground:'#22301e', road:'#3b3d43', kerb:'#5b5f66', line:'#dfe4ea', haze:'#7d6156', vis:110, shadow:.10, lamps:true},
+  night:   {top:'#050c18', bot:'#132440', ground:'#0f1b13', road:'#2b2d32', kerb:'#43474e', line:'#cfd6de', haze:'#0c1524', vis:78,  shadow:0,   lamps:true},
+  rain:    {top:'#3a4854', bot:'#6a7a88', ground:'#2b4231', road:'#3e434b', kerb:'#5e646c', line:'#dbe2e8', haze:'#8b98a4', vis:105, shadow:0,   lamps:true, wet:true},
+  fog:     {top:'#8c98a2', bot:'#b6c0c8', ground:'#5a675a', road:'#5a5e65', kerb:'#767c84', line:'#eaeef2', haze:'#c2cad1', vis:52,  shadow:0,   lamps:true}
+};
+
+/* ---------- object factory ---------- */
+const HZKIND = {
+  car:     {w:1.8, h:1.45, len:4.3},
+  van:     {w:2.0, h:2.3,  len:5.4},
+  bus:     {w:2.5, h:3.2,  len:11},
+  lorry:   {w:2.5, h:3.6,  len:12},
+  tractor: {w:2.3, h:3.0,  len:4.6},
+  ped:     {w:0.8, h:1.78, len:0.6},
+  child:   {w:0.65,h:1.25, len:0.5},
+  cyclist: {w:0.8, h:1.75, len:1.7},
+  motorbike:{w:0.85,h:1.6, len:2.1},
+  horse:   {w:1.1, h:2.4,  len:2.6},
+  dog:     {w:0.5, h:0.6,  len:1.0},
+  ball:    {w:0.45,h:0.45, len:0.45},
+  bin:     {w:0.7, h:1.1,  len:0.7},
+  cone:    {w:0.5, h:0.75, len:0.5}
+};
+function mk(kind, x, z, extra){
+  const o = Object.assign({}, HZKIND[kind], {kind, x, z, colour:'#3d5a84'}, extra||{});
+  return o;
 }
-function hzObj(kind, x, z, opts){
-  const base = {
-    parked:   {w:1.8, h:1.4,  colour:'#39506f'},
-    oncoming: {w:1.8, h:1.45, colour:'#5a3a5f'},
-    bus:      {w:2.5, h:3.2,  colour:'#8a3b2e'},
-    lorry:    {w:2.5, h:3.6,  colour:'#4a4a52'},
-    ped:      {w:0.8, h:1.8,  colour:'#ffd9a0'},
-    cyclist:  {w:0.8, h:1.75, colour:'#e8f0fb'},
-    ball:     {w:0.5, h:0.5,  colour:'#ff8a3d'}
-  }[kind];
-  return Object.assign({kind, x, z, speed:0}, base, opts||{});
+const PAINT = ['#3d5a84','#7a2f3a','#2f6b52','#5c4a7a','#8a6a2e','#4a4f57','#8c8f96','#2b4c6e'];
+function paint(i){ return PAINT[i % PAINT.length]; }
+
+/* =======================================================================
+   HAZARD SCRIPTS
+   Each returns objects, a description, the scoring windows, and how the
+   scene moves. dt keeps motion identical whatever the frame rate.
+   ======================================================================= */
+const HAZARDS = {
+  pedFromParked:(e,s,z0)=>{
+    const p = mk('ped', -5.4*s, z0, {colour:'#e6d3ad', walk:true});
+    const objs = [p];
+    for(let z=z0-26; z<z0+22; z+=8) objs.push(mk('car', -3.2*s, z, {colour:paint(z), still:true}));
+    return {objs, what:'A pedestrian stepping out from between parked cars', at:4.8,
+      move:(t,dt)=>{ if(t>4.8){ p.x += 2.5*s*dt; p.walk = true; } }};
+  },
+  childAfterBall:(e,s,z0)=>{
+    const b = mk('ball', -6.6*s, z0, {colour:'#ff8a3d'});
+    const k = mk('child', -7.4*s, z0+1.5, {colour:'#ffd9a0', walk:true});
+    return {objs:[b,k], what:'A ball, followed by a child running after it', at:4.4,
+      move:(t,dt)=>{ if(t>4.4) b.x += 6*s*dt; if(t>5.3) k.x += 4.4*s*dt; }};
+  },
+  cyclistAroundParked:(e,s,z0)=>{
+    const c = mk('cyclist', -3.0*s, z0-16, {colour:'#e8f0fb', walk:true});
+    return {objs:[c, mk('car', -3.2*s, z0, {colour:paint(3), still:true}),
+                     mk('car', -3.2*s, z0+7, {colour:paint(5), still:true})],
+      what:'A cyclist pulling out around a parked car', at:5.0,
+      move:(t,dt)=>{ c.z += 5.2*dt; if(t>5.0) c.x += 1.7*s*dt; }};
+  },
+  carDoorOpens:(e,s,z0)=>{
+    const d = mk('car', -3.2*s, z0, {colour:paint(1), still:true, door:0, doorSide:s});
+    const objs = [d];
+    for(let z=z0-24; z<z0+18; z+=8) if(Math.abs(z-z0)>3) objs.push(mk('car', -3.2*s, z, {colour:paint(z), still:true}));
+    return {objs, what:'A car door opening into your path', at:4.9,
+      move:(t,dt)=>{ if(t>4.9) d.door = Math.min(1.4, d.door + 1.5*dt); }};
+  },
+  carFromSideRoad:(e,s,z0)=>{
+    const c = mk('car', 8.5*s, z0, {colour:paint(1), profile:true});
+    return {objs:[c, mk('bin', 6.4*s, z0-4, {colour:'#3c4a3c'})],
+      what:'A car emerging from a side road', at:4.6,
+      move:(t,dt)=>{ if(t>4.6){ c.x -= 5.4*s*dt; c.z -= 3*dt; if(Math.abs(c.x)<4) c.profile = false; } }};
+  },
+  busPullsOut:(e,s,z0)=>{
+    const b = mk('bus', -3.5*s, z0, {colour:'#8a3b2e', still:true});
+    return {objs:[b, mk('ped', -5.6*s, z0-4, {colour:'#d9c8a4'})],
+      what:'A bus signalling and pulling away from a stop', at:4.8,
+      move:(t,dt)=>{ b.indicating = t>4.1; if(t>4.8){ b.x += 1.9*s*dt; b.z += 4.5*dt; } }};
+  },
+  lorryReverses:(e,s,z0)=>{
+    const l = mk('lorry', 10*s, z0, {colour:'#4a4a52', profile:true});
+    return {objs:[l], what:'A lorry reversing across the road', at:5.0,
+      move:(t,dt)=>{ if(t>5.0) l.x -= 2.6*s*dt; }};
+  },
+  oncomingDrifts:(e,s,z0)=>{
+    const clo = 11;                       // its speed towards you
+    const c = mk('car', 3.2, 52 + (e.speed + clo)*4.2, {colour:paint(4), facing:true});
+    return {objs:[c], what:'An oncoming car drifting onto your side', at:4.2,
+      move:(t,dt)=>{ c.z -= clo*dt; if(t>4.2) c.x -= 3.1*dt; }};
+  },
+  oncomingOvertakes:(e,s,z0)=>{
+    const base = 58 + (e.speed + 10)*4.4;
+    const l = mk('lorry', 3.3, base, {colour:'#5a5f66', facing:true});
+    const c = mk('car', 3.3, base + 15, {colour:paint(1), facing:true});
+    return {objs:[l,c], what:'An oncoming car overtaking a lorry towards you', at:4.4,
+      move:(t,dt)=>{ l.z -= 10*dt; c.z -= 14*dt; if(t>4.4) c.x -= 3.0*dt; }};
+  },
+  carAheadBrakes:(e,s,z0)=>{
+    const c = mk('car', -1.7, 34, {colour:paint(2)});
+    return {objs:[c], what:'The car in front braking sharply', at:4.6,
+      move:(t,dt)=>{ c.z += (t>4.6?1.5:e.speed)*dt; c.braking = t>4.6; }};
+  },
+  queueAhead:(e,s,z0)=>{
+    const cs = [0,1,2,3].map(i=>mk('car', i%2?-1.7:-1.9, 40+i*9, {colour:paint(i)}));
+    return {objs:cs, what:'A queue of traffic stopping ahead', at:4.4,
+      move:(t,dt)=>{ cs.forEach((c,i)=>{ const stop = 4.4 + i*0.25; c.z += (t>stop?0.4:e.speed)*dt; c.braking = t>stop; }); }};
+  },
+  pedZebra:(e,s,z0)=>{
+    const p = mk('ped', -6.0*s, z0, {colour:'#e6d3ad', walk:true});
+    return {objs:[p], zebra:z0, what:'A pedestrian about to step onto a zebra crossing', at:4.6,
+      move:(t,dt)=>{ if(t>4.6) p.x += 2.3*s*dt; }};
+  },
+  cyclistTurnsRight:(e,s,z0)=>{
+    const c = mk('cyclist', -2.9, z0-18, {colour:'#dfe8f4'});
+    return {objs:[c], what:'A cyclist signalling and moving out to turn right', at:4.8,
+      move:(t,dt)=>{ c.z += 5.4*dt; if(t>4.5) c.arm = true; if(t>4.8) c.x += 1.4*dt; }};
+  },
+  motorbikeFilters:(e,s,z0)=>{
+    const cs = [0,1,2].map(i=>mk('car', -1.8, 30+i*11, {colour:paint(i), braking:true, still:true}));
+    const m = mk('motorbike', 0.3, 20, {colour:'#c6ccd6'});
+    return {objs:cs.concat([m]), what:'A motorcyclist filtering past the queue', at:4.6,
+      move:(t,dt)=>{ if(t>4.6) m.z += 9*dt; else m.z += e.speed*dt*0.6; }};
+  },
+  horseShies:(e,s,z0)=>{
+    const h = mk('horse', -2.6, z0-12, {colour:'#6b4a33'});
+    return {objs:[h], what:'A horse and rider moving out into the road', at:4.8,
+      move:(t,dt)=>{ h.z += 3.2*dt; if(t>4.8) h.x += 1.3*dt; }};
+  },
+  tractorTurns:(e,s,z0)=>{
+    const tr = mk('tractor', -1.9, z0-20, {colour:'#2f6b52'});
+    return {objs:[tr], what:'A tractor slowing to turn into a field', at:4.6,
+      move:(t,dt)=>{ tr.z += (t>4.6?1.2:5)*dt; if(t>4.4) tr.arm = true; if(t>5.4) tr.x += 1.6*dt; }};
+  },
+  dogRunsOut:(e,s,z0)=>{
+    const g = mk('dog', -7*s, z0, {colour:'#9a8a6a'});
+    return {objs:[g, mk('ped', -8.2*s, z0-1, {colour:'#d9c8a4'})],
+      what:'A dog running into the road', at:4.5,
+      move:(t,dt)=>{ if(t>4.5) g.x += 6.5*s*dt; }};
+  },
+  carReversesOut:(e,s,z0)=>{
+    const c = mk('car', -6.6*s, z0, {colour:paint(6), profile:true, reversing:true});
+    return {objs:[c], what:'A car reversing off a driveway', at:4.8,
+      move:(t,dt)=>{ if(t>4.8) c.x += 2.5*s*dt; }};
+  },
+  pedCrossesSideRoad:(e,s,z0)=>{
+    const p = mk('ped', -6.4*s, z0, {colour:'#e6d3ad', walk:true});
+    return {objs:[p, mk('car', -8*s, z0+3, {colour:paint(2), profile:true, still:true})],
+      what:'A pedestrian crossing the side road you\u2019re turning into', at:4.7,
+      move:(t,dt)=>{ if(t>4.7) p.x += 2.1*s*dt; }};
+  },
+  binInRoad:(e,s,z0)=>{
+    const b = mk('bin', -5.2*s, z0, {colour:'#3c4a3c'});
+    return {objs:[b], what:'A wheelie bin blown into the carriageway', at:4.6,
+      move:(t,dt)=>{ if(t>4.6){ b.x += 2.8*s*dt; b.tilt = Math.min(1, (t-4.6)); } }};
+  },
+  roadworksWorker:(e,s,z0)=>{
+    const objs = [], p = mk('ped', -4.6*s, z0+2, {colour:'#ffdc4a', walk:true});
+    for(let i=0;i<6;i++) objs.push(mk('cone', -3.4*s, z0-8+i*3, {colour:'#e8641a'}));
+    objs.push(p);
+    return {objs, what:'A worker stepping out from behind the cones', at:5.0,
+      move:(t,dt)=>{ if(t>5.0) p.x += 1.9*s*dt; }};
+  },
+  vanDoorPerson:(e,s,z0)=>{
+    const v = mk('van', -3.3*s, z0, {colour:'#c6cad1', still:true, hazards:true});
+    const p = mk('ped', -4.6*s, z0-1, {colour:'#d9c8a4', walk:true});
+    return {objs:[v,p], what:'A delivery driver stepping out from behind a van', at:5.0,
+      move:(t,dt)=>{ if(t>5.0) p.x += 2.2*s*dt; }};
+  },
+  carEmergesRight:(e,s,z0)=>{
+    const c = mk('car', 9*s*-1, z0, {colour:paint(7), profile:true});
+    return {objs:[c], what:'A car pulling out from the right without looking', at:4.6,
+      move:(t,dt)=>{ if(t>4.6){ c.x += 5.2*s*dt; c.z -= 2.5*dt; if(Math.abs(c.x)<4.5) c.profile = false; } }};
+  },
+  schoolGroup:(e,s,z0)=>{
+    const k1 = mk('child', -5.6*s, z0, {colour:'#ffd9a0', walk:true});
+    const k2 = mk('child', -6.3*s, z0+1.2, {colour:'#f3c98a', walk:true});
+    return {objs:[k1,k2], what:'Schoolchildren stepping off the kerb', at:4.7,
+      move:(t,dt)=>{ if(t>4.7){ k1.x += 2.3*s*dt; k2.x += 1.9*s*dt; } }};
+  }
+};
+const HKEYS = Object.keys(HAZARDS);
+
+/* ---------- decoration that never scores ----------
+   Real clips are full of movement that comes to nothing. Clicking at all
+   of it is how people fail, so the practice clips contain it too.        */
+function distractors(e, s, kind){
+  const d = [];
+  if(kind==='walkers'){
+    const a = mk('ped', -5.9*s, 46, {colour:'#c9bda0', walk:true});
+    const b = mk('ped', 5.9*s, 62, {colour:'#bfc9d4', walk:true});
+    d.push(a,b);
+    d.drift = (t,dt)=>{ a.z += 1.3*dt; b.z -= 1.2*dt; };
+  } else if(kind==='traffic'){
+    const a = mk('car', 3.1, 130, {colour:paint(4), facing:true});
+    d.push(a);
+    d.drift = (t,dt)=>{ a.z -= 10*dt; if(a.z < 3) a.z = 165; };
+  } else if(kind==='parked'){
+    for(let z=40; z<110; z+=11) d.push(mk('car', 3.2*s, z, {colour:paint(z), still:true}));
+    d.drift = ()=>{};
+  } else { d.drift = ()=>{}; }
+  return d;
 }
 
-/* ---------- the clips ----------
-   Each returns: speed (m/s), duration (s), scene name, what the hazard is,
-   the objects, a per-frame update, and the hazard windows.            */
-const CLIPS = [
-  function pedestrianSteps(side){
-    const s = side||1, o = [];
-    for(let z=60; z<130; z+=9) o.push(hzObj('parked', -3.3*s, z));
-    const p = hzObj('ped', -5.6*s, 88);
-    o.push(p);
-    return {name:'Residential street', hazard:'A pedestrian stepping out between parked cars',
-      speed:11, duration:12, objects:o, hazards:[{start:5.4, band:0.8}],
-      update(t,dt){ if(t>5.4) p.x += (2.6*s)*dt; }};
-  },
-  function carPullsOut(side){
-    const s = side||-1, o = [];
-    for(let z=50; z<90; z+=11) o.push(hzObj('parked', 3.3*s*-1, z));
-    const c = hzCar(7.5*s, 96, '#7a2f3a');
-    o.push(c);
-    return {name:'Side road on the left', hazard:'A car emerging from the side road',
-      speed:12, duration:12, objects:o, hazards:[{start:5.0, band:0.8}],
-      update(t,dt){ if(t>5.0){ c.x += (-5.6*s)*dt; c.z -= 3.4*dt; } }};
-  },
-  function cyclistMovesOut(){
-    const o = [], c = hzObj('cyclist', -3.1, 74, {speed:5});
-    o.push(hzObj('parked', -3.3, 95), hzObj('parked', -3.3, 103), c);
-    return {name:'Town road with parked cars', hazard:'A cyclist pulling out around a parked car',
-      speed:11, duration:12, objects:o, hazards:[{start:5.6, band:0.8}],
-      update(t,dt){ c.z += 5*dt; if(t>5.6) c.x += 1.5*dt; }};
-  },
-  function doorOpens(){
-    const o = [], d = hzObj('parked', -3.3, 84, {door:0});
-    for(let z=58; z<120; z+=10) if(z!==92) o.push(hzObj('parked', -3.3, z));
-    o.push(d);
-    return {name:'Narrow high street', hazard:'A car door opening into your path',
-      speed:10, duration:11, objects:o, hazards:[{start:5.2, band:0.8}],
-      update(t,dt){ if(t>5.2) d.door = Math.min(1.5, d.door + 1.4*dt); }};
-  },
-  function ballThenChild(){
-    const o = [], b = hzObj('ball', -6.5, 80), k = hzObj('ped', -7.2, 82, {h:1.25, colour:'#ffd9a0'});
-    for(let z=55; z<120; z+=12) o.push(hzObj('parked', 3.3, z));
-    o.push(b, k);
-    return {name:'Quiet estate road', hazard:'A ball, then a child running after it',
-      speed:10, duration:12, objects:o, hazards:[{start:4.6, band:0.8}],
-      update(t,dt){ if(t>4.6) b.x += 5.5*dt; if(t>5.6) k.x += 4.2*dt; }};
-  },
-  function busPullsOut(){
-    const o = [], b = hzObj('bus', -3.6, 90);
-    o.push(b, hzObj('parked', 3.3, 70));
-    return {name:'Bus stop ahead', hazard:'A bus signalling and moving off',
-      speed:12, duration:12, objects:o, hazards:[{start:5.0, band:0.8}],
-      update(t,dt){ if(t>5.0){ b.x += 1.9*dt; b.z += 4*dt; } b.indicating = t>4.4; }};
-  },
-  function oncomingOvertakes(){
-    const o = [], c = hzObj('oncoming', 3.4, 150, {speed:-14});
-    o.push(c, hzObj('parked', 3.3, 120));
-    return {name:'Rural single carriageway', hazard:'An oncoming car pulling onto your side',
-      speed:13, duration:11, objects:o, hazards:[{start:4.4, band:0.8}],
-      update(t,dt){ c.z -= 16*dt; if(t>4.4) c.x -= 3.2*dt; }};
-  },
-  function lorryReverses(){
-    const o = [], l = hzObj('lorry', 9, 92);
-    o.push(l);
-    return {name:'Industrial estate', hazard:'A lorry reversing across the road',
-      speed:11, duration:12, objects:o, hazards:[{start:5.2, band:0.8}],
-      update(t,dt){ if(t>5.2) l.x -= 2.4*dt; }};
-  },
-  function carBrakesHard(){
-    const o = [], c = hzCar(-1.6, 40, '#2f6b52', {speed:11});
-    o.push(c, hzObj('parked', 3.3, 90));
-    return {name:'Queue building ahead', hazard:'The car in front braking sharply',
-      speed:12, duration:11, objects:o, hazards:[{start:4.8, band:0.8}],
-      update(t,dt){ c.z += (t>4.8?2:11)*dt; c.braking = t>4.8; }};
-  },
-  function pedOnZebra(){
-    const o = [], p = hzObj('ped', -6.2, 84);
-    o.push(p, hzObj('parked', 3.3, 60), hzObj('parked', 3.3, 72));
-    return {name:'Approaching a zebra crossing', hazard:'A pedestrian about to step onto the crossing',
-      speed:11, duration:11, objects:o, zebra:84, hazards:[{start:4.8, band:0.8}],
-      update(t,dt){ if(t>4.8) p.x += 2.2*dt; }};
-  },
-  function twoHazards(){
-    const o = [], p = hzObj('ped', -6.0, 72), c = hzCar(8, 128, '#7a2f3a');
-    for(let z=50; z<75; z+=11) o.push(hzObj('parked', -3.3, z));
-    o.push(p, c);
-    return {name:'Busy town centre', hazard:'Two developing hazards in one clip',
-      speed:11, duration:16, objects:o, hazards:[{start:3.6, band:0.8},{start:9.2, band:0.8}],
-      update(t,dt){ if(t>3.6) p.x += 2.4*dt; if(t>9.2){ c.x -= 6*dt; c.z -= 3*dt; } }};
-  }
+/* =======================================================================
+   THE 50 CLIPS
+   ======================================================================= */
+const CLIPLIST = [
+  ['pedFromParked','residential','day',1,'walkers'],
+  ['carFromSideRoad','town','day',-1,'parked'],
+  ['childAfterBall','residential','day',1,'parked'],
+  ['carDoorOpens','highstreet','day',1,'walkers'],
+  ['cyclistAroundParked','town','day',1,'traffic'],
+  ['busPullsOut','highstreet','day',1,'walkers'],
+  ['oncomingDrifts','country','day',1,null],
+  ['carAheadBrakes','town','day',1,'parked'],
+  ['pedZebra','highstreet','day',1,'walkers'],
+  ['dogRunsOut','country','day',1,null],
+
+  ['pedFromParked','highstreet','overcast',-1,'parked'],
+  ['carEmergesRight','town','overcast',1,'traffic'],
+  ['queueAhead','dual','overcast',1,null],
+  ['tractorTurns','country','overcast',1,null],
+  ['vanDoorPerson','highstreet','overcast',1,'walkers'],
+  ['cyclistTurnsRight','town','overcast',1,'traffic'],
+  ['lorryReverses','town','overcast',-1,'parked'],
+  ['schoolGroup','residential','overcast',1,'parked'],
+  ['binInRoad','residential','overcast',-1,'walkers'],
+  ['motorbikeFilters','town','overcast',1,'parked'],
+
+  ['pedFromParked','residential','dusk',1,'parked'],
+  ['carFromSideRoad','residential','dusk',1,'walkers'],
+  ['oncomingOvertakes','rural','dusk',1,null],
+  ['horseShies','country','dusk',1,null],
+  ['carReversesOut','residential','dusk',-1,'parked'],
+  ['childAfterBall','residential','dusk',-1,'parked'],
+  ['pedZebra','town','dusk',1,'traffic'],
+  ['carAheadBrakes','rural','dusk',1,'traffic'],
+
+  ['pedFromParked','highstreet','night',1,'parked'],
+  ['cyclistAroundParked','town','night',1,'traffic'],
+  ['carFromSideRoad','town','night',-1,'parked'],
+  ['oncomingDrifts','rural','night',1,null],
+  ['dogRunsOut','residential','night',1,'parked'],
+  ['queueAhead','dual','night',1,null],
+  ['pedCrossesSideRoad','town','night',1,'walkers'],
+  ['vanDoorPerson','highstreet','night',-1,'parked'],
+
+  ['carAheadBrakes','dual','rain',1,null],
+  ['pedZebra','highstreet','rain',1,'walkers'],
+  ['cyclistAroundParked','town','rain',1,'parked'],
+  ['oncomingDrifts','rural','rain',1,null],
+  ['busPullsOut','highstreet','rain',1,'traffic'],
+  ['carFromSideRoad','town','rain',1,'parked'],
+  ['roadworksWorker','town','rain',1,'traffic'],
+  ['queueAhead','dual','rain',1,null],
+
+  ['queueAhead','dual','fog',1,null],
+  ['carAheadBrakes','rural','fog',1,null],
+  ['tractorTurns','country','fog',1,null],
+  ['pedFromParked','residential','fog',1,'parked'],
+  ['oncomingDrifts','country','fog',1,null],
+  ['lorryReverses','town','fog',-1,'parked']
 ];
 
-/* ---------- drawing ---------- */
-const HZCFG = {focal:540, camH:1.35, roadHalf:4.2};
+/* clips that carry two scoreable hazards — one of these appears in a full test */
+const DOUBLES = [
+  ['pedFromParked','carFromSideRoad','highstreet','day',1,'parked'],
+  ['childAfterBall','oncomingDrifts','residential','day',1,'parked'],
+  ['cyclistAroundParked','pedZebra','town','overcast',1,'walkers'],
+  ['busPullsOut','carEmergesRight','highstreet','dusk',1,'parked'],
+  ['carDoorOpens','motorbikeFilters','town','night',1,'parked'],
+  ['queueAhead','binInRoad','rural','rain',1,null],
+  ['schoolGroup','carReversesOut','residential','day',-1,'parked'],
+  ['pedFromParked','dogRunsOut','country','fog',1,null]
+];
 
-function hzProject(x, relz, w, h){
+function buildClip(spec, isDouble){
+  const env = ENVS[isDouble ? spec[2] : spec[1]];
+  const sky = SKIES[isDouble ? spec[3] : spec[2]];
+  const skyName = isDouble ? spec[3] : spec[2];
+  const side = isDouble ? spec[4] : spec[3];
+  const dec = distractors(env, side, isDouble ? spec[5] : spec[4]);
+
+  const build = [];
+  if(isDouble){
+    build.push(HAZARDS[spec[0]](env, side, 40 + env.speed*4.6));
+    build.push(HAZARDS[spec[1]](env, side*-1, 40 + env.speed*10.4));
+  } else {
+    build.push(HAZARDS[spec[0]](env, side, 40 + env.speed*4.6));
+  }
+
+  const objs = dec.slice();
+  build.forEach(b=>b.objs.forEach(o=>objs.push(o)));
+  const hazards = build.map((b,i)=> ({start: b.at + (i? 5.6 : 0), band:0.8}));
+  const zebra = build.find(b=>b.zebra) ? build.find(b=>b.zebra).zebra : null;
+
+  return {
+    name: env.name + ' · ' + ({day:'daylight',overcast:'overcast',dusk:'dusk',night:'night',rain:'heavy rain',fog:'fog'}[skyName]),
+    hazard: build.map(b=>b.what).join(', and then '),
+    env, sky, skyName, objects:objs, hazards, zebra,
+    speed: env.speed,
+    duration: (isDouble ? 15.5 : 10.5),
+    update(t, dt){
+      dec.drift(t, dt);
+      build.forEach((b,i)=> b.move(t - (i?5.6:0), dt));
+    }
+  };
+}
+
+/* =======================================================================
+   DRAWING
+   ======================================================================= */
+const HZCFG = {focal:560, camH:1.35};
+
+function hzProject(x, relz, W, H){
   const sc = HZCFG.focal / Math.max(relz, 0.8);
-  return {sc, sx: w/2 + x*sc, sy: h*0.44 + HZCFG.camH*sc};
+  return {sc, sx: W/2 + x*sc, sy: H*0.45 + HZCFG.camH*sc};
+}
+function fade(rz, vis){
+  if(rz > vis) return 0;
+  const edge = vis * 0.42;
+  return rz > vis - edge ? Math.max(0, (vis - rz) / edge) : 1;
+}
+
+function drawBody(c, o, p, sky){
+  const sideOn = o.profile;
+  const wm = sideOn ? o.len : o.w;
+  const w = wm * p.sc, h = o.h * p.sc, x = p.sx - w/2, y = p.sy - h;
+  const col = o.colour || '#3d5a84';
+
+  if(sky.shadow > 0){
+    c.globalAlpha *= 1;
+    c.fillStyle = 'rgba(0,0,0,' + sky.shadow + ')';
+    c.beginPath(); c.ellipse(p.sx, p.sy, w*0.56, h*0.10, 0, 0, 7); c.fill();
+  }
+  // lower body
+  c.fillStyle = col;
+  c.fillRect(x, y + h*0.34, w, h*0.66);
+  // cabin
+  c.fillStyle = col;
+  c.beginPath();
+  c.moveTo(x + w*0.14, y + h*0.36);
+  c.lineTo(x + w*0.26, y);
+  c.lineTo(x + w*0.74, y);
+  c.lineTo(x + w*0.86, y + h*0.36);
+  c.closePath(); c.fill();
+  // glass
+  c.fillStyle = sky.lamps ? 'rgba(10,20,36,.82)' : 'rgba(22,42,68,.6)';
+  c.fillRect(x + w*0.26, y + h*0.07, w*0.48, h*0.26);
+  // wheels
+  c.fillStyle = '#15171b';
+  c.fillRect(x + w*0.05, y + h*0.86, w*0.16, h*0.16);
+  c.fillRect(x + w*0.79, y + h*0.86, w*0.16, h*0.16);
+  // door swung open
+  if(o.door > 0){
+    c.fillStyle = col;
+    const dw = o.door * p.sc * (o.doorSide||1);
+    c.fillRect(dw > 0 ? x + w : x + dw, y + h*0.36, Math.abs(dw), h*0.46);
+  }
+  // lights
+  if(o.facing){
+    c.fillStyle = sky.lamps ? '#fffbe0' : '#f2edc8';
+    c.fillRect(x + w*0.08, y + h*0.52, w*0.17, h*0.16);
+    c.fillRect(x + w*0.75, y + h*0.52, w*0.17, h*0.16);
+    if(sky.lamps){
+      c.globalAlpha *= 0.35; c.fillStyle = '#fff6c9';
+      c.beginPath(); c.ellipse(p.sx, y + h*0.6, w*0.9, h*0.3, 0, 0, 7); c.fill();
+      c.globalAlpha /= 0.35;
+    }
+  } else if(!sideOn){
+    c.fillStyle = o.braking ? '#ff2d20' : (sky.lamps ? '#e0392c' : '#8f2b24');
+    c.fillRect(x + w*0.05, y + h*0.48, w*0.18, h*0.14);
+    c.fillRect(x + w*0.77, y + h*0.48, w*0.18, h*0.14);
+    if(o.reversing){
+      c.fillStyle = '#fdfbee';
+      c.fillRect(x + w*0.42, y + h*0.52, w*0.16, h*0.1);
+    }
+  }
+  if(o.indicating && Math.floor(HZ.t*2.4)%2===0){
+    c.fillStyle = '#ffb81c';
+    c.fillRect(x + w*0.78, y + h*0.64, w*0.18, h*0.12);
+  }
+  if(o.hazards && Math.floor(HZ.t*2.4)%2===0){
+    c.fillStyle = '#ffb81c';
+    c.fillRect(x + w*0.04, y + h*0.64, w*0.16, h*0.11);
+    c.fillRect(x + w*0.8, y + h*0.64, w*0.16, h*0.11);
+  }
+}
+
+function drawPerson(c, o, p, sky, t){
+  const w = o.w * p.sc, h = o.h * p.sc, x = p.sx, y = p.sy - h;
+  if(sky.shadow > 0){
+    c.fillStyle = 'rgba(0,0,0,' + sky.shadow + ')';
+    c.beginPath(); c.ellipse(p.sx, p.sy, w*0.55, h*0.05, 0, 0, 7); c.fill();
+  }
+  const swing = o.walk ? Math.sin(t*7) * w*0.36 : 0;
+  c.strokeStyle = o.colour; c.lineWidth = Math.max(1.2, w*0.30);
+  c.lineCap = 'round';
+  c.beginPath();                                  // legs
+  c.moveTo(x, y + h*0.56); c.lineTo(x + swing, p.sy);
+  c.moveTo(x, y + h*0.56); c.lineTo(x - swing, p.sy);
+  c.stroke();
+  c.fillStyle = o.colour;
+  c.fillRect(x - w*0.30, y + h*0.20, w*0.60, h*0.38);   // torso
+  c.beginPath(); c.arc(x, y + h*0.12, w*0.30, 0, 7); c.fill();  // head
+}
+
+function drawRider(c, o, p, sky, t){
+  const w = o.w * p.sc, h = o.h * p.sc, x = p.sx, y = p.sy - h;
+  c.strokeStyle = '#1d232c'; c.lineWidth = Math.max(1, w*0.16);
+  c.beginPath();
+  c.arc(x, p.sy - h*0.14, h*0.15, 0, 7);
+  c.stroke();
+  c.fillStyle = o.colour;
+  c.fillRect(x - w*0.26, y + h*0.22, w*0.52, h*0.44);
+  c.beginPath(); c.arc(x, y + h*0.12, w*0.30, 0, 7); c.fill();
+  if(o.arm){
+    c.strokeStyle = o.colour; c.lineWidth = Math.max(1, w*0.2);
+    c.beginPath(); c.moveTo(x, y + h*0.3); c.lineTo(x + w*1.1, y + h*0.26); c.stroke();
+  }
+  if(sky.lamps){
+    c.fillStyle = '#e0392c';
+    c.fillRect(x - w*0.1, y + h*0.42, w*0.2, h*0.08);
+  }
+}
+
+function drawHorse(c, o, p, sky){
+  const w = o.w * p.sc, h = o.h * p.sc, x = p.sx, y = p.sy - h;
+  c.fillStyle = o.colour;
+  c.fillRect(x - w*0.45, y + h*0.38, w*0.9, h*0.30);
+  c.fillRect(x - w*0.34, y + h*0.66, w*0.14, h*0.34);
+  c.fillRect(x + w*0.20, y + h*0.66, w*0.14, h*0.34);
+  c.fillRect(x - w*0.10, y + h*0.16, w*0.24, h*0.26);
+  c.fillStyle = '#c2543f';
+  c.fillRect(x - w*0.22, y + h*0.06, w*0.42, h*0.34);
+  c.fillStyle = '#e8e2d2';
+  c.beginPath(); c.arc(x, y + h*0.02, w*0.16, 0, 7); c.fill();
 }
 
 function hzDraw(){
-  const c = HZ.ctx, W = HZ.canvas.width, H = HZ.canvas.height, clip = HZ.clip, t = HZ.t;
-  const camZ = clip.speed * t, hz = H*0.44;
+  const c = HZ.ctx, W = HZ.canvas.width, H = HZ.canvas.height;
+  const clip = HZ.clip, t = HZ.t, sky = clip.sky, env = clip.env;
+  const camZ = clip.speed * t, hz = H*0.45, vis = sky.vis;
 
-  // sky and ground
-  const sky = c.createLinearGradient(0,0,0,hz);
-  sky.addColorStop(0,'#0d2748'); sky.addColorStop(1,'#2b5c86');
-  c.fillStyle = sky; c.fillRect(0,0,W,hz);
-  c.fillStyle = '#16301f'; c.fillRect(0,hz,W,H-hz);
+  // sky
+  const g = c.createLinearGradient(0,0,0,hz);
+  g.addColorStop(0, sky.top); g.addColorStop(1, sky.bot);
+  c.fillStyle = g; c.fillRect(0,0,W,hz);
+  // ground
+  c.fillStyle = sky.ground; c.fillRect(0,hz,W,H-hz);
 
-  // road surface
-  const near = hzProject(0, 2, W, H), far = hzProject(0, 140, W, H);
-  const nl = hzProject(-HZCFG.roadHalf, 2, W, H), nr = hzProject(HZCFG.roadHalf, 2, W, H);
-  const fl = hzProject(-HZCFG.roadHalf, 140, W, H), fr = hzProject(HZCFG.roadHalf, 140, W, H);
-  c.fillStyle = '#31343b';
-  c.beginPath(); c.moveTo(nl.sx, nl.sy); c.lineTo(nr.sx, nr.sy); c.lineTo(fr.sx, fr.sy); c.lineTo(fl.sx, fl.sy); c.closePath(); c.fill();
+  // road
+  const pts = (x,z)=>hzProject(x,z,W,H);
+  const far = Math.min(vis*1.2, 170);
+  const nl = pts(-env.half, 2), nr = pts(env.half, 2), fl = pts(-env.half, far), fr = pts(env.half, far);
+  c.fillStyle = sky.road;
+  c.beginPath(); c.moveTo(nl.sx,nl.sy); c.lineTo(nr.sx,nr.sy); c.lineTo(fr.sx,fr.sy); c.lineTo(fl.sx,fl.sy); c.closePath(); c.fill();
 
-  // pavements
-  c.fillStyle = '#4a4e57';
-  [[-1],[1]].forEach(([s])=>{
-    const a = hzProject(s*HZCFG.roadHalf, 2, W, H), b = hzProject(s*(HZCFG.roadHalf+2.4), 2, W, H);
-    const d = hzProject(s*HZCFG.roadHalf, 140, W, H), e = hzProject(s*(HZCFG.roadHalf+2.4), 140, W, H);
-    c.beginPath(); c.moveTo(a.sx,a.sy); c.lineTo(b.sx,b.sy); c.lineTo(e.sx,e.sy); c.lineTo(d.sx,d.sy); c.closePath(); c.fill();
-  });
-
-  // centre line dashes
-  c.fillStyle = '#d9dde4';
-  for(let z = 8 - (camZ % 8); z < 130; z += 8){
-    const a = hzProject(-0.12, z, W, H), b = hzProject(0.12, z, W, H), d = hzProject(0.12, z+3.2, W, H), e = hzProject(-0.12, z+3.2, W, H);
-    c.beginPath(); c.moveTo(a.sx,a.sy); c.lineTo(b.sx,b.sy); c.lineTo(d.sx,d.sy); c.lineTo(e.sx,e.sy); c.closePath(); c.fill();
-  }
-
-  // zebra stripes if this clip has one
-  if(clip.zebra){
-    const rz = clip.zebra - camZ;
-    if(rz > 2 && rz < 120){
-      c.fillStyle = '#e8ecf2';
-      for(let i=-4;i<=4;i++){
-        const a = hzProject(i*1.0, rz, W, H), b = hzProject(i*1.0+0.55, rz, W, H),
-              d = hzProject(i*1.0+0.55, rz+4, W, H), e = hzProject(i*1.0, rz+4, W, H);
-        c.beginPath(); c.moveTo(a.sx,a.sy); c.lineTo(b.sx,b.sy); c.lineTo(d.sx,d.sy); c.lineTo(e.sx,e.sy); c.closePath(); c.fill();
-      }
-    }
-  }
-
-  // roadside blocks, for a sense of speed
-  c.fillStyle = '#122b1c';
-  for(let z = 12 - (camZ % 12); z < 130; z += 12){
+  // pavement
+  if(env.kerb){
+    c.fillStyle = sky.kerb;
     [-1,1].forEach(s=>{
-      const p = hzProject(s*9.5, z, W, H), hgt = 4*p.sc;
-      c.fillRect(p.sx - 1.6*p.sc, p.sy - hgt, 3.2*p.sc, hgt);
+      const a = pts(s*env.half, 2), b = pts(s*(env.half+2.6), 2), d = pts(s*(env.half+2.6), far), e2 = pts(s*env.half, far);
+      c.beginPath(); c.moveTo(a.sx,a.sy); c.lineTo(b.sx,b.sy); c.lineTo(d.sx,d.sy); c.lineTo(e2.sx,e2.sy); c.closePath(); c.fill();
     });
   }
 
-  // objects, furthest first
-  clip.objects.slice().sort((a,b)=>(b.z-camZ)-(a.z-camZ)).forEach(o=>{
-    const rz = o.z - camZ;
-    if(rz < 1.2 || rz > 145) return;
-    const p = hzProject(o.x, rz, W, H);
-    const w = o.w * p.sc, h = o.h * p.sc, x = p.sx - w/2, y = p.sy - h;
-
-    if(o.kind==='ped' || o.kind==='cyclist'){
-      c.fillStyle = o.colour;
-      c.fillRect(x, y + h*0.22, w, h*0.78);
-      c.beginPath(); c.arc(p.sx, y + h*0.14, w*0.52, 0, 7); c.fill();
-      if(o.kind==='cyclist'){
-        c.strokeStyle = '#8fa4bd'; c.lineWidth = Math.max(1, p.sc*0.05);
-        c.beginPath(); c.arc(p.sx, p.sy - h*0.12, h*0.16, 0, 7); c.stroke();
-      }
-    } else if(o.kind==='ball'){
-      c.fillStyle = o.colour;
-      c.beginPath(); c.arc(p.sx, p.sy - h/2, w/2, 0, 7); c.fill();
-    } else {
-      // body
-      c.fillStyle = o.colour;
-      c.fillRect(x, y, w, h);
-      // glass
-      c.fillStyle = 'rgba(12,24,44,.55)';
-      c.fillRect(x + w*0.12, y + h*0.12, w*0.76, h*0.34);
-      // open door
-      if(o.door > 0){
-        c.fillStyle = o.colour;
-        c.fillRect(x + w, y + h*0.25, o.door*0.9*p.sc, h*0.55);
-      }
-      if(o.kind==='oncoming'){
-        c.fillStyle = '#fff3c4';
-        c.fillRect(x + w*0.08, y + h*0.62, w*0.2, h*0.16);
-        c.fillRect(x + w*0.72, y + h*0.62, w*0.2, h*0.16);
-      } else {
-        c.fillStyle = o.braking ? '#ff3b30' : '#8f2b24';
-        c.fillRect(x + w*0.06, y + h*0.55, w*0.18, h*0.14);
-        c.fillRect(x + w*0.76, y + h*0.55, w*0.18, h*0.14);
-      }
-      if(o.indicating && Math.floor(HZ.t*2)%2===0){
-        c.fillStyle = '#ffb81c';
-        c.fillRect(x + w*0.76, y + h*0.72, w*0.18, h*0.12);
-      }
+  // centre markings
+  c.fillStyle = sky.line;
+  const gap = env.lanes ? 10 : 8, dash = env.lanes ? 4 : 3.2;
+  const lanes = env.lanes ? [-env.half/2, env.half/2] : [0];
+  lanes.forEach(lx=>{
+    for(let z = gap - (camZ % gap); z < far; z += gap){
+      const al = fade(z, vis); if(!al) continue;
+      c.globalAlpha = al;
+      const a = pts(lx-0.12, z), b = pts(lx+0.12, z), d = pts(lx+0.12, z+dash), e2 = pts(lx-0.12, z+dash);
+      c.beginPath(); c.moveTo(a.sx,a.sy); c.lineTo(b.sx,b.sy); c.lineTo(d.sx,d.sy); c.lineTo(e2.sx,e2.sy); c.closePath(); c.fill();
     }
   });
+  c.globalAlpha = 1;
 
-  // your own bonnet, to anchor the view
-  c.fillStyle = '#0a1422';
-  c.beginPath();
-  c.moveTo(0, H); c.lineTo(0, H*0.93); c.quadraticCurveTo(W/2, H*0.83, W, H*0.93); c.lineTo(W, H); c.closePath(); c.fill();
+  // zebra
+  if(clip.zebra){
+    const rz = clip.zebra - camZ;
+    if(rz > 2 && rz < vis){
+      c.globalAlpha = fade(rz, vis); c.fillStyle = sky.line;
+      for(let i=-4;i<=4;i++){
+        const a = pts(i*1.0, rz), b = pts(i*1.0+0.55, rz), d = pts(i*1.0+0.55, rz+4), e2 = pts(i*1.0, rz+4);
+        c.beginPath(); c.moveTo(a.sx,a.sy); c.lineTo(b.sx,b.sy); c.lineTo(d.sx,d.sy); c.lineTo(e2.sx,e2.sy); c.closePath(); c.fill();
+      }
+      c.globalAlpha = 1;
+    }
+  }
 
-  // click flags
-  HZ.clicks.forEach((cl,i)=>{
-    c.fillStyle = cl.scored ? '#2ee6a8' : '#ff4d63';
-    c.fillRect(10 + i*13, H - 22, 9, 12);
+  // scenery
+  const scen = {houses:'#3a3f4a', shops:'#454a55', hedge:'#1d3a22', trees:'#1a3320', verge:'#24402a'}[env.scenery];
+  for(let z = 12 - (camZ % 12); z < far; z += 12){
+    const al = fade(z, vis); if(!al) continue;
+    c.globalAlpha = al; c.fillStyle = scen;
+    [-1,1].forEach(s=>{
+      const p = pts(s*(env.half+5.2), z);
+      const flat = (env.scenery==='hedge'||env.scenery==='verge');
+      const vary = ((Math.round(z)*7 + (s>0?13:0)) % 5) / 5;
+      const tall = flat ? 1.6 + vary*0.8 : 4.5 + vary*4.5;
+      const hgt = tall*p.sc;
+      c.fillRect(p.sx - 2.2*p.sc, p.sy - hgt, 4.4*p.sc, hgt);
+      if(sky.lamps && env.kerb && z > 20 && Math.round(z) % 24 < 12){
+        c.fillStyle = '#ffd98a'; c.globalAlpha = al*0.45;
+        const r = Math.min(0.42*p.sc, W*0.018);
+        c.beginPath(); c.arc(p.sx, p.sy - Math.min(7*p.sc, H*0.5), r, 0, 7); c.fill();
+        c.globalAlpha = al; c.fillStyle = scen;
+      }
+    });
+  }
+  c.globalAlpha = 1;
+
+  // objects, far to near
+  clip.objects.slice().sort((a,b)=>(b.z-camZ)-(a.z-camZ)).forEach(o=>{
+    const rz = o.z - camZ;
+    if(rz < 1.0) return;
+    const al = fade(rz, vis); if(!al) return;
+    c.globalAlpha = al;
+    const p = hzProject(o.x, rz, W, H);
+    if(o.kind==='ped' || o.kind==='child') drawPerson(c, o, p, sky, t);
+    else if(o.kind==='cyclist' || o.kind==='motorbike') drawRider(c, o, p, sky, t);
+    else if(o.kind==='horse') drawHorse(c, o, p, sky);
+    else if(o.kind==='ball' || o.kind==='dog'){
+      c.fillStyle = o.colour;
+      c.beginPath(); c.arc(p.sx, p.sy - o.h*p.sc*0.5, o.w*p.sc*0.5, 0, 7); c.fill();
+      if(o.kind==='dog') c.fillRect(p.sx - o.len*p.sc*0.4, p.sy - o.h*p.sc*0.55, o.len*p.sc*0.8, o.h*p.sc*0.35);
+    }
+    else if(o.kind==='cone'){
+      c.fillStyle = o.colour;
+      c.beginPath(); c.moveTo(p.sx, p.sy - o.h*p.sc); c.lineTo(p.sx + o.w*p.sc*0.5, p.sy); c.lineTo(p.sx - o.w*p.sc*0.5, p.sy); c.closePath(); c.fill();
+    }
+    else if(o.kind==='bin'){
+      c.save(); c.translate(p.sx, p.sy); c.rotate((o.tilt||0)*0.5);
+      c.fillStyle = o.colour; c.fillRect(-o.w*p.sc*0.5, -o.h*p.sc, o.w*p.sc, o.h*p.sc); c.restore();
+    }
+    else drawBody(c, o, p, sky);
   });
+  c.globalAlpha = 1;
 
-  // clip counter
-  c.fillStyle = 'rgba(230,242,255,.85)';
-  c.font = '600 13px Overpass, sans-serif';
-  c.fillText('Clip ' + (HZ.run.i+1) + ' of ' + HZ.run.clips.length, 10, 20);
+  // rain
+  if(sky.wet){
+    c.strokeStyle = 'rgba(200,220,240,.34)'; c.lineWidth = Math.max(1, W/520);
+    HZ.rain.forEach(r=>{
+      r.y += r.s; if(r.y > H){ r.y = -20; r.x = Math.random()*W; }
+      c.beginPath(); c.moveTo(r.x, r.y); c.lineTo(r.x - 2, r.y + r.l); c.stroke();
+    });
+  }
+  // fog wash
+  if(sky.vis < 60){
+    const f = c.createLinearGradient(0, hz - H*0.06, 0, H);
+    f.addColorStop(0, sky.haze); f.addColorStop(0.55, 'rgba(194,202,209,0)');
+    c.fillStyle = f; c.fillRect(0, hz - H*0.06, W, H);
+  }
+
+  // bonnet
+  c.fillStyle = sky.lamps ? '#080d16' : '#1b2129';
+  c.beginPath(); c.moveTo(0,H); c.lineTo(0,H*0.94);
+  c.quadraticCurveTo(W/2, H*0.84, W, H*0.94); c.lineTo(W,H); c.closePath(); c.fill();
+
+  // click flags and counter
+  HZ.clicks.forEach((cl,i)=>{
+    if(i > 26) return;
+    c.fillStyle = cl.scored ? '#2ee6a8' : '#ff4d63';
+    c.fillRect(10 + i*13, H - 24, 9, 13);
+  });
+  c.fillStyle = 'rgba(240,248,255,.9)';
+  c.font = '600 ' + Math.round(W/38) + 'px Overpass, sans-serif';
+  c.fillText('Clip ' + (HZ.run.i+1) + ' of ' + HZ.run.clips.length, 10, 22);
 }
 
-/* ---------- the loop ---------- */
+/* =======================================================================
+   LOOP, CLICKS, RUN
+   ======================================================================= */
 function hzFrame(ts){
   if(!HZ.clip) return;
   if(!HZ.last) HZ.last = ts;
   const dt = Math.min(0.05, (ts - HZ.last)/1000);
-  HZ.last = ts;
-  HZ.t += dt;
+  HZ.last = ts; HZ.t += dt;
   HZ.clip.update(HZ.t, dt);
   hzDraw();
   if(HZ.t >= HZ.clip.duration){ hzEndClip(); return; }
   HZ.raf = requestAnimationFrame(hzFrame);
 }
 
-/* ---------- clicking ---------- */
 function hzClick(){
   if(!HZ.clip) return;
   const t = HZ.t;
   HZ.clicks.push({t, scored:false});
-
-  // the real test voids a clip if you click continuously or in a pattern
   const recent = HZ.clicks.filter(c=>t - c.t < 3).length;
-  if(!HZ.flagged && (HZ.clicks.length > 14 || recent > 6)){
+  if(!HZ.flagged && (HZ.clicks.length > 16 || recent > 6)){
     HZ.flagged = true;
     HZ.scored = HZ.clip.hazards.map(()=>0);
   }
   if(HZ.flagged) return;
-
   HZ.clip.hazards.forEach((hzd,i)=>{
     if(HZ.scored[i] > 0) return;
     const into = t - hzd.start;
@@ -2255,23 +2603,22 @@ function hzClick(){
   });
 }
 
-/* ---------- run management ---------- */
 function hzStartRun(n){
-  // exactly one clip in a full run carries two hazards, as in the real test
-  const withTwo = CLIPS.length - 1;
-  const picks = shuffle(CLIPS.map((f,i)=>i).filter(i=>i!==withTwo));
+  const singles = shuffle(CLIPLIST.map((c,i)=>i));
   const list = [];
-  for(let i=0;i<n;i++){
-    const idx = (n >= 14 && i === n-1) ? withTwo : picks[i % picks.length];
-    list.push({make:CLIPS[idx], side: i%2 ? 1 : -1});
+  if(n >= 14){
+    for(let i=0;i<13;i++) list.push({spec:CLIPLIST[singles[i]], dbl:false});
+    list.push({spec: shuffle(DOUBLES.slice())[0], dbl:true});
+  } else {
+    for(let i=0;i<n;i++) list.push({spec:CLIPLIST[singles[i]], dbl:false});
   }
-  HZ.run = {clips:list, i:0, scores:[], full:n>=14};
+  HZ.run = {clips:list, i:0, scores:[], max:0, full:n>=14};
   hzPlay();
 }
 
 function hzPlay(){
   const spec = HZ.run.clips[HZ.run.i];
-  HZ.clip = spec.make(spec.side);
+  HZ.clip = buildClip(spec.spec, spec.dbl);
   HZ.t = 0; HZ.last = 0; HZ.clicks = []; HZ.flagged = false;
   HZ.scored = HZ.clip.hazards.map(()=>0);
 
@@ -2281,76 +2628,77 @@ function hzPlay(){
       <button class="back" style="margin:0;padding:0" onclick="hzQuit()">Quit</button>
     </div>
     <canvas id="hzCanvas" class="hzcanvas"></canvas>
-    <p class="mute small" style="margin-top:10px">Tap the picture the moment you see a hazard developing.</p>`;
+    <p class="mute small" style="margin-top:10px">Tap the picture the moment a hazard starts developing. Some clips have more than one.</p>`;
   show('s-hazard');
 
   const cv = document.getElementById('hzCanvas');
   const wid = Math.min(cv.parentElement.clientWidth || 380, 600);
-  cv.width = Math.round(wid * (window.devicePixelRatio > 1 ? 2 : 1));
-  cv.height = Math.round(cv.width * 0.66);
-  cv.style.width = wid + 'px';
-  cv.style.height = Math.round(wid * 0.66) + 'px';
+  const dpr = window.devicePixelRatio > 1 ? 2 : 1;
+  cv.width = Math.round(wid*dpr); cv.height = Math.round(wid*0.64*dpr);
+  cv.style.width = wid+'px'; cv.style.height = Math.round(wid*0.64)+'px';
   HZ.canvas = cv; HZ.ctx = cv.getContext('2d');
+  HZ.rain = [];
+  if(HZ.clip.sky.wet) for(let i=0;i<70;i++)
+    HZ.rain.push({x:Math.random()*cv.width, y:Math.random()*cv.height, l:10+Math.random()*16, s:14+Math.random()*12});
   cv.addEventListener('pointerdown', e=>{ e.preventDefault(); hzClick(); });
-
   HZ.raf = requestAnimationFrame(hzFrame);
 }
 
 function hzEndClip(){
   cancelAnimationFrame(HZ.raf);
   const got = HZ.scored.reduce((a,b)=>a+b,0);
-  const max = HZ.clip.hazards.length * 5;
-  HZ.run.scores.push(got);
-  const clip = HZ.clip;
-  const flagged = HZ.flagged;
+  const n = HZ.clip.hazards.length, max = n*5;
+  HZ.run.scores.push({got, max, two:n>1});
+  HZ.run.max += max;
+  const clip = HZ.clip, flagged = HZ.flagged, missedSecond = n>1 && HZ.scored[1]===0 && HZ.scored[0]>0;
   HZ.clip = null;
 
-  const verdict = flagged ? 'Clip voided'
-    : got === 0 ? 'Missed it'
-    : got >= 4 ? 'Spotted it early' : got >= 2 ? 'A bit late' : 'Very late';
+  const verdict = flagged ? 'Clip voided' : got===0 ? 'Missed it'
+    : got >= max-1 ? 'Spotted early' : got >= max*0.5 ? 'A bit late' : 'Very late';
 
   document.getElementById('s-hazard').innerHTML = `
-    <div class="verdict" style="padding-top:30px">
-      <div class="big ${got>=3?'pass':got===0?'fail':''}">${got}<span>/${max}</span></div>
-      <div class="word ${got>=3?'pass':got===0?'fail':''}">${verdict}</div>
+    <div class="verdict" style="padding-top:26px">
+      <div class="big ${got>=max*0.6?'pass':got===0?'fail':''}">${got}<span>/${max}</span></div>
+      <div class="word ${got>=max*0.6?'pass':got===0?'fail':''}">${verdict}</div>
+      <p class="mute small">${esc(clip.name)}</p>
     </div>
-    <div class="why ${got>=3?'ok':'no'}" style="margin-top:18px">
-      <b>${esc(clip.name)}</b>${flagged
-        ? 'You clicked too often. In the real test, clicking continuously or in a regular pattern scores zero for that clip.'
-        : 'The hazard was: ' + esc(clip.hazard) + (got===0
-            ? '. You either missed it or clicked before it began developing — clicks before the window opens score nothing.'
-            : '. Each second you delay costs you a point, so click as soon as something starts to change.')}</div>
-    <button class="btn go" onclick="hzNext()">${HZ.run.i === HZ.run.clips.length-1 ? 'See your score' : 'Next clip'}</button>
+    <div class="why ${got>=max*0.6?'ok':'no'}" style="margin-top:16px">
+      <b>${n>1?'Two hazards in that clip':'The hazard'}</b>${flagged
+        ? 'You clicked too often. Clicking continuously or in a pattern scores zero for the clip, in this and in the real test.'
+        : esc(clip.hazard) + '.' + (missedSecond
+            ? ' You caught the first and stopped watching. One clip in every real test has two hazards and you are never told which.'
+            : got===0 ? ' You either missed it or clicked before it began — clicks before the window opens score nothing.'
+                      : ' Every extra second costs a mark, so click at the first change, not once it is obvious.')}</div>
+    <button class="btn go" onclick="hzNext()">${HZ.run.i===HZ.run.clips.length-1?'See your score':'Next clip'}</button>
     <button class="btn ghost" onclick="hzQuit()">Stop here</button>`;
   show('s-hazard');
 }
 
 function hzNext(){
-  if(HZ.run.i < HZ.run.clips.length-1){ HZ.run.i++; hzPlay(); }
-  else hzFinish();
+  if(HZ.run.i < HZ.run.clips.length-1){ HZ.run.i++; hzPlay(); } else hzFinish();
 }
 
 function hzFinish(){
-  const total = HZ.run.scores.reduce((a,b)=>a+b,0);
-  const max = HZ.run.clips.length === 14 ? 75 : HZ.run.clips.length*5;
-  const pass = HZ.run.clips.length === 14 ? total >= 44 : total >= Math.round(max*0.586);
+  const total = HZ.run.scores.reduce((a,b)=>a+b.got,0);
+  const max = HZ.run.max;
+  const pass = HZ.run.full ? total >= 44 : total >= Math.round(max*0.587);
   if(HZ.run.full){
     S.hzBest = Math.max(S.hzBest||0, total);
     if(total >= 44) award('eyes');
     save();
   }
   const rows = HZ.run.scores.map((sc,i)=>`
-    <div class="brow"><span class="nm">Clip ${i+1}</span>
-      <span class="bar"><i style="width:${(sc/5)*100}%;background:${sc>=3?'var(--go)':sc>0?'var(--amber)':'var(--stop)'}"></i></span>
-      <span class="n">${sc}/5</span></div>`).join('');
+    <div class="brow"><span class="nm">Clip ${i+1}${sc.two?' · two hazards':''}</span>
+      <span class="bar"><i style="width:${(sc.got/sc.max)*100}%;background:${sc.got>=sc.max*0.6?'var(--go)':sc.got>0?'var(--amber)':'var(--stop)'}"></i></span>
+      <span class="n">${sc.got}/${sc.max}</span></div>`).join('');
   document.getElementById('s-hazard').innerHTML = `
     <div class="verdict">
       <div class="big ${pass?'pass':'fail'}">${total}<span>/${max}</span></div>
       <div class="word ${pass?'pass':'fail'}">${pass?'PASS':'NOT YET'}</div>
-      ${HZ.run.clips.length===14?'<p class="mute small">The real pass mark is 44 out of 75</p>':''}
+      ${HZ.run.full?'<p class="mute small">The real pass mark is 44 out of 75</p>':''}
     </div>
-    <p>${pass ? 'Good spotting. Keep clicking as soon as something starts to change, not once it becomes obvious.'
-              : 'Most lost marks come from clicking too late. The window opens at the first clue — a head turning, an indicator, a shadow moving.'}</p>
+    <p>${pass ? 'Good spotting. Keep clicking at the first change rather than waiting for it to become obvious.'
+              : 'Most lost marks come from clicking late. The window opens at the first clue — a head turning, an indicator, a shadow moving behind a van.'}</p>
     <div class="breakdown"><h3 style="margin-bottom:6px">Clip by clip</h3>${rows}</div>
     <div class="row" style="margin-top:20px">
       <button class="btn ghost" onclick="hzQuit()">Home</button>
@@ -2369,15 +2717,16 @@ function hzIntro(){
   document.getElementById('s-hazard').innerHTML = `
     <button class="back" onclick="renderHome()">‹ Back</button>
     <h2>Hazard perception</h2>
-    <p class="mute small">A developing hazard is something that makes you change speed or direction.
-    Tap the moment you see one starting — the earlier you are, the more you score, from 5 down to 0.</p>
+    <p class="mute small">A developing hazard is anything that makes you change speed or direction.
+    Tap as soon as one starts — the earlier you are, the more you score, from 5 down to 0.</p>
     <div class="why" style="margin-top:14px">
-      <b>How the real test works</b>14 clips, 15 scoreable hazards, 75 marks available and 44 to pass.
-      You can't go back and clips play once. Clicking constantly to game it scores zero for that clip.</div>
+      <b>How the real test works</b>14 clips but 15 scoreable hazards, so one clip has two and you are
+      never told which. 75 marks are available and you need 44. Clips play once and you can't go back.</div>
     <div class="why no" style="margin-top:10px">
-      <b>Be aware</b>These are drawn animations, not the filmed clips DVSA uses. They're here to train your
-      timing and your clicking, not to look like the real footage. Practise on real video too.</div>
-    ${S.hzBest?`<p class="small mute" style="margin-top:14px">Your best full run: ${S.hzBest}/75</p>`:''}
+      <b>Two traps</b>Clicking constantly scores zero for that clip. And some things that move never
+      become hazards — a pedestrian walking along the pavement isn't one. Clicking at everything won't help.</div>
+    <p class="small mute" style="margin-top:14px">${CLIPLIST.length + DOUBLES.length} clips across daylight, overcast,
+    dusk, night, heavy rain and fog.${S.hzBest?' Your best full run: '+S.hzBest+'/75.':''}</p>
     <button class="btn go" onclick="hzStartRun(5)">Practice — 5 clips</button>
     <button class="btn ghost" onclick="hzStartRun(14)">Full test — 14 clips</button>`;
   show('s-hazard');
