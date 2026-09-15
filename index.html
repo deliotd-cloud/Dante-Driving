@@ -1540,7 +1540,7 @@ function renderHome(){
       <button class="tile" onclick="startWeak()">
         <span class="ico">🩹</span><span><b>Weak spots</b><span>${S.wrongIds.length} question${S.wrongIds.length===1?'':'s'} waiting to be fixed</span></span></button>
       <button class="tile" onclick="hzIntro()">
-        <span class="ico">👁️</span><span><b>Hazard perception</b><span>Spot developing hazards${S.hzBest?' · best '+S.hzBest+'/75':' · 14 clips, 44 to pass'}</span></span></button>
+        <span class="ico">👁️</span><span><b>Hazard perception</b><span>${(S.hzSeen||[]).length}/${CLIPLIST.length+DOUBLES.length} clips seen${S.hzBest?' · best '+S.hzBest+'/75':' · 44 to pass'}</span></span></button>
       <button class="tile boss" onclick="startMock()">
         <span class="ico">🎮</span><span><b>Boss run: full mock test</b><span>50 questions · 57 minutes · 43 to pass</span></span></button>
       <button class="tile" onclick="renderBadges()">
@@ -2603,16 +2603,36 @@ function hzClick(){
   });
 }
 
-function hzStartRun(n){
-  const singles = shuffle(CLIPLIST.map((c,i)=>i));
-  const list = [];
-  if(n >= 14){
-    for(let i=0;i<13;i++) list.push({spec:CLIPLIST[singles[i]], dbl:false});
-    list.push({spec: shuffle(DOUBLES.slice())[0], dbl:true});
+function hzSeen(){ return S.hzSeen || (S.hzSeen = []); }
+function hzTotal(){ return CLIPLIST.length + DOUBLES.length; }
+
+/* mode 'new' works through clips he hasn't met yet; otherwise it's random,
+   the way the real test picks them */
+function hzStartRun(n, mode){
+  const seen = hzSeen();
+  const singleIds = CLIPLIST.map((c,i)=>'s'+i);
+  const doubleIds = DOUBLES.map((c,i)=>'d'+i);
+  let list = [];
+
+  if(mode === 'new'){
+    const unseen = shuffle(singleIds.concat(doubleIds).filter(id=>!seen.includes(id)));
+    list = unseen.slice(0, n).map(id=>({
+      id, dbl:id[0]==='d',
+      spec:(id[0]==='d' ? DOUBLES : CLIPLIST)[+id.slice(1)]
+    }));
+  } else if(n >= 14){
+    const ss = shuffle(singleIds), ds = shuffle(doubleIds);
+    for(let i=0;i<13;i++) list.push({id:ss[i], dbl:false, spec:CLIPLIST[+ss[i].slice(1)]});
+    list.push({id:ds[0], dbl:true, spec:DOUBLES[+ds[0].slice(1)]});
   } else {
-    for(let i=0;i<n;i++) list.push({spec:CLIPLIST[singles[i]], dbl:false});
+    // practice: show him clips he hasn't seen first
+    const fresh = shuffle(singleIds.filter(id=>!seen.includes(id)));
+    const rest  = shuffle(singleIds.filter(id=>seen.includes(id)));
+    list = fresh.concat(rest).slice(0, n).map(id=>({id, dbl:false, spec:CLIPLIST[+id.slice(1)]}));
   }
-  HZ.run = {clips:list, i:0, scores:[], max:0, full:n>=14};
+
+  if(!list.length){ toast('You\u2019ve seen every clip — running a random set'); return hzStartRun(14); }
+  HZ.run = {clips:list, i:0, scores:[], max:0, full:n>=14 && mode!=='new'};
   hzPlay();
 }
 
@@ -2646,6 +2666,8 @@ function hzPlay(){
 
 function hzEndClip(){
   cancelAnimationFrame(HZ.raf);
+  const id = HZ.run.clips[HZ.run.i].id;
+  if(id && !hzSeen().includes(id)){ hzSeen().push(id); save(); }
   const got = HZ.scored.reduce((a,b)=>a+b,0);
   const n = HZ.clip.hazards.length, max = n*5;
   HZ.run.scores.push({got, max, two:n>1});
@@ -2714,6 +2736,7 @@ function hzQuit(){
 }
 
 function hzIntro(){
+  const seen = hzSeen().length, all = hzTotal(), left = all - seen;
   document.getElementById('s-hazard').innerHTML = `
     <button class="back" onclick="renderHome()">‹ Back</button>
     <h2>Hazard perception</h2>
@@ -2724,12 +2747,24 @@ function hzIntro(){
       never told which. 75 marks are available and you need 44. Clips play once and you can't go back.</div>
     <div class="why no" style="margin-top:10px">
       <b>Two traps</b>Clicking constantly scores zero for that clip. And some things that move never
-      become hazards — a pedestrian walking along the pavement isn't one. Clicking at everything won't help.</div>
-    <p class="small mute" style="margin-top:14px">${CLIPLIST.length + DOUBLES.length} clips across daylight, overcast,
-    dusk, night, heavy rain and fog.${S.hzBest?' Your best full run: '+S.hzBest+'/75.':''}</p>
-    <button class="btn go" onclick="hzStartRun(5)">Practice — 5 clips</button>
-    <button class="btn ghost" onclick="hzStartRun(14)">Full test — 14 clips</button>`;
+      become hazards — a pedestrian walking along the pavement isn't one.</div>
+
+    <h3 style="margin-top:26px">The library</h3>
+    <p class="mute small">There are ${all} clips here across daylight, overcast, dusk, night, heavy rain
+    and fog. A test only ever shows 14 of them, picked at random, so work through the library separately
+    if you want to meet them all.</p>
+    <div class="xpbar" style="margin-top:12px"><i style="width:${Math.round(seen/all*100)}%"></i></div>
+    <p class="small mute" style="margin-top:8px">${seen} of ${all} clips seen${left?' · '+left+' to go':' · all done'}${S.hzBest?' · best full run '+S.hzBest+'/75':''}</p>
+
+    <button class="btn go" onclick="hzStartRun(14)">Full test — 14 clips</button>
+    <button class="btn ghost" onclick="hzStartRun(5)">Quick practice — 5 clips</button>
+    ${left ? `<button class="btn ghost" onclick="hzStartRun(${Math.min(10,left)},'new')">New clips only — ${Math.min(10,left)} you haven't seen</button>` : ''}
+    ${seen ? `<button class="btn ghost" onclick="hzReset()">Reset which clips I've seen</button>` : ''}`;
   show('s-hazard');
+}
+
+function hzReset(){
+  S.hzSeen = []; save(); toast('Clip history cleared'); hzIntro();
 }
 
 /* =======================================================================
