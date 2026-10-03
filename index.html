@@ -25,7 +25,7 @@
   html{background:var(--void)}
   body{
     background:transparent;
-    padding-top:76px;
+    padding-top:86px;
     color:var(--ice);
     font-family:Overpass,'Segoe UI',system-ui,sans-serif;
     font-size:17px;line-height:1.45;
@@ -64,7 +64,7 @@
 
   /* ---------- Dante's car ---------- */
   .corner-car{
-    position:fixed;top:8px;right:max(12px, calc(50% - 300px));width:92px;height:auto;
+    position:fixed;top:6px;right:max(0px, calc(50% - 308px));width:88px;height:auto;
     z-index:40;pointer-events:none;
     filter:drop-shadow(0 7px 14px rgba(0,0,0,.6)) drop-shadow(0 0 16px rgba(63,208,255,.25));
   }
@@ -229,7 +229,7 @@
   .topic .tx span{font-size:12.5px;color:var(--dim)}
 
   /* ---------- quiz ---------- */
-  .qhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 10px}
+  .qhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0 10px;flex-wrap:wrap}
   .qhead .meta{font-size:12px;color:var(--dim);letter-spacing:.06em;font-family:'Chakra Petch',sans-serif}
   .clock{font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:17px;padding:4px 12px;
          color:var(--azure);background:rgba(63,208,255,.10);clip-path:var(--chamS);
@@ -313,6 +313,18 @@
   .brow .bar i{display:block;height:100%}
   .brow .n{width:48px;text-align:right;color:var(--dim);font-size:13px;font-family:'Chakra Petch',sans-serif}
 
+  .logrow{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+    background:var(--skin);clip-path:var(--chamS);padding:13px 15px;margin-bottom:8px;
+    box-shadow:inset 0 0 0 1px var(--hair), inset 2px 0 0 rgba(63,208,255,.5);
+  }
+  .logrow:active{box-shadow:inset 0 0 0 1px rgba(120,220,255,.5), inset 3px 0 0 var(--azure)}
+  .logrow.ok{box-shadow:inset 0 0 0 1px var(--hair), inset 3px 0 0 var(--go)}
+  .logrow.no{box-shadow:inset 0 0 0 1px var(--hair), inset 3px 0 0 var(--stop)}
+  .logrow .sc{font-family:'Chakra Petch',sans-serif;font-size:23px;font-weight:700;min-width:64px}
+  .logrow .dt{flex:1;min-width:0}
+  .logrow .dt b{display:block;font-size:15px;font-weight:600}
+  .logrow .dt span{display:block;font-size:12.5px;color:var(--dim)}
   .ach{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:16px}
   .badge{background:rgba(10,24,44,.6);clip-path:var(--chamS);padding:13px 10px;text-align:center;
          box-shadow:inset 0 0 0 1px rgba(96,178,255,.14);opacity:.4}
@@ -362,6 +374,7 @@
   <div class="screen" id="s-badges"></div>
   <div class="screen" id="s-settings"></div>
   <div class="screen" id="s-hazard"></div>
+  <div class="screen" id="s-history"></div>
 </div>
 <div class="quizcar" id="quizCar"><img alt=""></div>
 <div class="toast" id="toast"></div>
@@ -1633,6 +1646,118 @@ function fillSplash(){
   splashTimer = setTimeout(closeSplash, 4500);
 }
 
+
+/* =======================================================================
+   MOCK TEST HISTORY
+   Every mock is kept with its date, score and the questions that were
+   missed. Each missed question is stored with a hash of its text as well
+   as its position, so an old result still resolves to the right question
+   after the bank grows.
+   ======================================================================= */
+function qHash(str){
+  let h = 5381;
+  for(let i=0;i<str.length;i++) h = ((h*33) ^ str.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+function resolveQ(ref){
+  const at = BANK[ref.i];
+  if(at && qHash(at.q) === ref.h) return ref.i;
+  return BANK.findIndex(q=>qHash(q.q) === ref.h);
+}
+function fmtDate(ms){
+  const d = new Date(ms);
+  return d.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'}) +
+         ' \u00b7 ' + d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+}
+
+function renderHistory(){
+  const all = S.mockLog || [];
+  const rows = all.map((m,idx)=>({m,idx})).reverse().map(({m,idx})=>{
+    const pass = m.score >= 43;
+    return `<button class="logrow ${pass?'ok':'no'}" onclick="renderMockReview(${idx})">
+      <span class="sc ${pass?'pass':'fail'}">${m.score}<span style="font-size:13px;color:var(--dim)">/${m.total}</span></span>
+      <span class="dt"><b>${fmtDate(m.d)}</b><span>${pass?'Passed':'Below the pass mark'} \u00b7 ${m.wrong.length} to review</span></span>
+      <span class="mute">\u203a</span></button>`;
+  }).join('');
+
+  const sc = all.map(m=>m.score);
+  const best = sc.length ? Math.max.apply(null, sc) : 0;
+  const avg = sc.length ? Math.round(sc.reduce((a,b)=>a+b,0)/sc.length) : 0;
+  const passed = sc.filter(x=>x>=43).length;
+  const trend = sc.length > 1 ? (sc[sc.length-1] - sc[0]) : null;
+
+  document.getElementById('s-history').innerHTML = `
+    <button class="back" onclick="renderHome()">\u2039 Back</button>
+    <h2>Mock test results</h2>
+    ${sc.length ? `<div class="stats" style="margin-top:14px">
+      <div class="stat"><b>${best}</b><span>best</span></div>
+      <div class="stat"><b>${avg}</b><span>average</span></div>
+      <div class="stat"><b>${passed}/${sc.length}</b><span>passed</span></div>
+    </div>
+    <p class="mute small" style="margin-top:14px">Pass mark is 43 out of 50${trend!==null?` \u00b7 ${trend>0?'up':trend<0?'down':'level'} ${Math.abs(trend)} since your first`:''}. Tap a result to see what you got wrong.</p>`
+    : '<p class="mute small" style="margin-top:12px">Nothing here yet. Every mock test you sit is saved automatically, with the date and the questions you missed.</p>'}
+    <div style="margin-top:14px">${rows}</div>
+    ${all.length ? `<button class="btn ghost" style="margin-top:18px" onclick="clearHistory()">Clear results history</button>` : '<button class="btn go" onclick="startMock()">Sit a mock test</button>'}`;
+  show('s-history');
+}
+
+function clearHistory(){
+  if(!confirm('Delete every saved mock result? This cannot be undone.')) return;
+  S.mockLog = []; S.mocks = []; save();
+  toast('Results cleared');
+  renderHistory();
+}
+
+function renderMockReview(idx){
+  const m = (S.mockLog || [])[idx];
+  if(!m){ renderHistory(); return; }
+  const pass = m.score >= 43;
+
+  const rows = m.cats.map(function(e){
+    const c = e[0], r = e[1], t = e[2], p = Math.round(r/t*100);
+    return `<div class="brow"><span style="width:24px">${CATS[c].emoji}</span>
+      <span class="nm">${CATS[c].name}</span>
+      <span class="bar"><i style="width:${p}%;background:${p>=80?'var(--go)':p>=50?'var(--amber)':'var(--stop)'}"></i></span>
+      <span class="n">${r}/${t}</span></div>`;
+  }).join('');
+
+  const ids = m.wrong.map(resolveQ);
+  const review = m.wrong.map(function(ref,n){
+    const id = ids[n];
+    if(id < 0) return `<div style="border-bottom:1px solid rgba(96,178,255,.14);padding:12px 0">
+      <div class="small mute">That question is no longer in the question bank.</div></div>`;
+    const q = BANK[id];
+    return `<div style="border-bottom:1px solid rgba(96,178,255,.14);padding:12px 0">
+      ${q.s?`<div style="width:64px;margin-bottom:6px">${signSVG(q.s)}</div>`:''}
+      <div style="font-weight:600">${esc(q.q)}</div>
+      ${q.oi
+        ? `<div style="width:64px;margin-top:6px">${signSVG(q.o[q.a])}</div>`
+        : `<div class="small" style="color:var(--go);margin-top:4px">Answer: ${esc(isMulti(q)? q.a.map(i=>q.o[i]).join(' + ') : q.o[q.a])}</div>`}
+      <div class="small mute" style="margin-top:3px">${esc(q.e)}</div></div>`;
+  }).join('');
+
+  const retry = ids.filter(function(i){ return i >= 0; });
+  document.getElementById('s-history').innerHTML = `
+    <button class="back" onclick="renderHistory()">\u2039 All results</button>
+    <div class="verdict" style="padding-top:10px">
+      <div class="big ${pass?'pass':'fail'}">${m.score}<span>/${m.total}</span></div>
+      <div class="word ${pass?'pass':'fail'}">${pass?'PASS':'NOT YET'}</div>
+      <p class="mute small">${fmtDate(m.d)}</p>
+    </div>
+    <div class="breakdown"><h3 style="margin-bottom:6px">How it broke down</h3>${rows}</div>
+    <h3 style="margin-top:24px">What you got wrong (${m.wrong.length})</h3>
+    ${m.wrong.length ? review : '<p class="mute small">Nothing \u2014 a clean sweep.</p>'}
+    ${retry.length ? `<button class="btn go" style="margin-top:18px" onclick="retryMock(${idx})">Retry these ${retry.length} questions</button>` : ''}`;
+  show('s-history');
+}
+
+function retryMock(idx){
+  const m = (S.mockLog || [])[idx];
+  const ids = m.wrong.map(resolveQ).filter(function(i){ return i >= 0; });
+  if(!ids.length){ toast('Nothing left to retry'); return; }
+  begin(shuffle(ids), 'practice', 'Retry \u00b7 ' + fmtDate(m.d).split(' \u00b7 ')[0]);
+}
+
 /* =======================================================================
    SCREENS
    ======================================================================= */
@@ -1733,12 +1858,14 @@ function renderHome(){
         <span class="ico">👁️</span><span><b>Hazard perception</b><span>${(S.hzSeen||[]).length}/${CLIPLIST.length+DOUBLES.length} clips seen${S.hzBest?' · best '+S.hzBest+'/75':' · 44 to pass'}</span></span></button>
       <button class="tile boss" onclick="startMock()">
         <span class="ico">🎮</span><span><b>Boss run: full mock test</b><span>50 questions · 57 minutes · 43 to pass</span></span></button>
+      <button class="tile" onclick="renderHistory()">
+        <span class="ico">ὌA</span><span><b>Mock test results</b><span>${(S.mockLog||[]).length ? (S.mockLog||[]).length+' saved · review what you got wrong' : 'Saved after every mock, with what you missed'}</span></span></button>
       <button class="tile" onclick="renderBadges()">
         <span class="ico">🏅</span><span><b>Achievements</b><span>${S.badges.length} of ${BADGES.length} unlocked</span></span></button>
       <button class="tile" onclick="renderSettings()">
         <span class="ico">⚙️</span><span><b>Test date and progress</b><span>Set the countdown or reset everything</span></span></button>
     </div>
-    <p class="small mute" style="margin-top:18px">${S.mocks.length ? 'Last mock: '+S.mocks[S.mocks.length-1]+'/50' : 'No mock test attempted yet. Do one this week.'}</p>
+    <p class="small mute" style="margin-top:18px">${S.mocks.length ? 'Last mock: '+S.mocks[S.mocks.length-1]+'/50 · <a href="#" onclick="renderHistory();return false">see all results</a>' : 'No mock test attempted yet. Do one this week.'}</p>
     <div class="foot">
       <b style="color:var(--ice);font-weight:600">Read this before you rely on it.</b>
       These are original questions written from The Highway Code and Know Your Traffic Signs.
@@ -2112,6 +2239,17 @@ function finish(){
   save();
 
   const missed = Q.ids.map((id,n)=>({id,n})).filter(x=>!wasRight(x.n));
+
+  if(mock){
+    S.mockLog = S.mockLog || [];
+    S.mockLog.push({
+      d: Date.now(), score, total,
+      cats: Object.keys(byCat).map(c=>[c, byCat[c].r, byCat[c].t]),
+      wrong: missed.map(x=>({i:x.id, h:qHash(BANK[x.id].q)}))
+    });
+    if(S.mockLog.length > 25) S.mockLog = S.mockLog.slice(-25);
+    save();
+  }
   const review = missed.map(x=>{
     const q = BANK[x.id];
     return `<div style="border-bottom:1px solid rgba(96,178,255,.14);padding:12px 0">
